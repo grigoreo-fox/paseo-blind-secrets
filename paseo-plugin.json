@@ -1,0 +1,9 @@
+{
+  "id": "blind-secrets",
+  "name": "blind-secrets",
+  "description": "Give an agent secrets, and read its secrets, without the model seeing them",
+  "media": [],
+  "requirements": {
+    "paseo": ">=0.16.2"
+  }
+}
