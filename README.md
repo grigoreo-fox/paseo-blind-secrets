@@ -30,10 +30,10 @@ The agent never receives a value in either direction. Values travel from the Pas
 Requires Paseo 0.16.2 or later with plugins enabled on the daemon.
 
 ```bash
-paseo plugin add git:OWNER/blind-secrets
+paseo plugin add git:grigoreo-fox/paseo-blind-secrets
 ```
 
-Start new agents after installing or updating. Replace `OWNER` with the GitHub account that hosts this repository.
+Start new agents after installing or updating.
 
 ## Limits
 

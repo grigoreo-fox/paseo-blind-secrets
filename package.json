@@ -29,5 +29,16 @@
     "typescript": "^5.9.3",
     "vitest": "^5.1.2",
     "zod": "^4.4.3"
-  }
+  },
+  "description": "Paseo plugin that lets AI agents ask for and show secrets through a private card in the chat.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/grigoreo-fox/paseo-blind-secrets.git"
+  },
+  "keywords": [
+    "paseo",
+    "paseo-plugin",
+    "ai-agents",
+    "secrets"
+  ]
 }
