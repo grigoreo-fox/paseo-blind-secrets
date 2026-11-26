@@ -1,3 +1,4 @@
+import { resolve as resolvePath } from "node:path";
 import { describe, expect, it } from "vitest";
 import type { AgentToolContext, AgentToolResult } from "@getpaseo/plugin/server";
 import { MAX_SECRET_BYTES } from "../server/files";
@@ -13,10 +14,14 @@ interface Options {
   gate?: Promise<void>;
   failStage?: string;
   failAppend?: boolean;
+  failCheck?: Record<string, string>;
+  failAfterFirstRead?: string[];
 }
 
 function setup(options: Options = {}) {
-  const { timeoutMs = 600_000, readable = {}, gate, failStage, failAppend } = options;
+  const { timeoutMs = 600_000, readable = {}, gate, failStage, failAppend, failCheck = {}, failAfterFirstRead = [] } =
+    options;
+  const reads = new Map<string, number>();
   const rows: SecretRowData[] = [];
   const written: Array<{ path: string; value: string }> = [];
   const discarded: string[] = [];
@@ -34,14 +39,21 @@ function setup(options: Options = {}) {
           discard: async () => void discarded.push(path),
         };
       },
+      checkWritable: async (path) => {
+        if (path in failCheck) throw new Error(`${failCheck[path]}: ${path}`);
+      },
       read: async (path) => {
+        reads.set(path, (reads.get(path) ?? 0) + 1);
+        if (failAfterFirstRead.includes(path) && reads.get(path)! > 1) {
+          throw new Error(`not readable: ${path}`);
+        }
         if (!(path in readable)) throw new Error(`not readable: ${path}`);
         const value = readable[path];
         if (value === "<binary>") throw new Error(`not text: ${path}`);
         return value;
       },
     },
-    resolve: (cwd, input) => `${cwd}/${input}`,
+    resolve: (cwd, input) => resolvePath(cwd, input),
     appendRow: async (_paseo, _agentId, data) => {
       if (failAppend) throw new Error("append failed");
       rows.push(structuredClone(data));
@@ -300,8 +312,8 @@ describe("show_secrets", () => {
     t.nothingLeaks(result);
   });
 
-  it("names the files that could not be shown and marks them in the row", async () => {
-    const t = setup({ readable: { "/work/t": SECRET } });
+  it("names the files that vanished after the check and marks them in the row", async () => {
+    const t = setup({ readable: { "/work/t": SECRET, "/work/g": SECRET }, failAfterFirstRead: ["/work/g"] });
     const run = t.service.showSecrets.execute(show, t.context());
     await tick();
     const requestId = t.pendingId();
@@ -320,8 +332,11 @@ describe("show_secrets", () => {
     t.nothingLeaks(result);
   });
 
-  it("returns an error when no file could be shown", async () => {
-    const t = setup({ readable: { "/work/t": "<binary>" } });
+  it("returns an error when no file could be shown after the check", async () => {
+    const t = setup({
+      readable: { "/work/t": SECRET, "/work/g": SECRET },
+      failAfterFirstRead: ["/work/t", "/work/g"],
+    });
     const run = t.service.showSecrets.execute(show, t.context());
     await tick();
     const requestId = t.pendingId();
@@ -329,7 +344,7 @@ describe("show_secrets", () => {
     await t.service.handlers.submit({ requestId, values: {} });
     expect(await run).toEqual({
       isError: true,
-      text: "None of the secrets could be shown. Not shown: /work/t (not text), /work/g (not readable)",
+      text: "None of the secrets could be shown. Not shown: /work/t (not readable), /work/g (not readable)",
     });
   });
 
@@ -359,5 +374,71 @@ describe("show_secrets", () => {
     await t.service.handlers.submit({ requestId, values: {} });
     await run;
     await expect(t.service.handlers.read({ requestId })).rejects.toThrow("unknown_request");
+  });
+});
+
+describe("checks before the user is asked", () => {
+  const show = {
+    secrets: [
+      { label: "token", path: "t" },
+      { label: "gone", path: "g" },
+      { label: "bin", path: "b" },
+    ],
+  };
+
+  it("show_secrets returns every unreadable file to the agent and shows no card", async () => {
+    const t = setup({ readable: { "/work/t": SECRET, "/work/b": "<binary>" } });
+    const result = await t.service.showSecrets.execute(show, t.context());
+    expect(result).toEqual({
+      isError: true,
+      text: "Cannot show: /work/g (not readable), /work/b (not text). The user was not asked.",
+    });
+    expect(t.rows).toEqual([]);
+    expect(t.registry.listForAgent("agent-1")).toEqual([]);
+    t.nothingLeaks(result);
+  });
+
+  it("show_secrets opens the card when every file passes", async () => {
+    const t = setup({ readable: { "/work/t": SECRET } });
+    const run = t.service.showSecrets.execute({ secrets: [show.secrets[0]] }, t.context());
+    await tick();
+    expect(t.rows[0].status).toBe("pending");
+    await t.service.handlers.submit({ requestId: t.pendingId(), values: {} });
+    expect((await run).isError).toBeFalsy();
+  });
+
+  it("get_secrets returns unwritable targets to the agent and shows no card", async () => {
+    const t = setup({ failCheck: { "/work/b": "is a directory" } });
+    const result = await t.service.getSecrets.execute(two, t.context());
+    expect(result).toEqual({
+      isError: true,
+      text: "Cannot write: /work/b (is a directory). The user was not asked.",
+    });
+    expect(t.rows).toEqual([]);
+    expect(t.registry.listForAgent("agent-1")).toEqual([]);
+  });
+
+  it("get_secrets refuses two secrets that resolve to the same file", async () => {
+    const t = setup();
+    const result = await t.service.getSecrets.execute(
+      {
+        secrets: [
+          { name: "a", path: "x" },
+          { name: "b", path: "./x" },
+        ],
+      },
+      t.context(),
+    );
+    expect(result.isError).toBe(true);
+    expect(result.text).toContain("same file");
+    expect(t.rows).toEqual([]);
+  });
+
+  it("get_secrets lists every unwritable target", async () => {
+    const t = setup({ failCheck: { "/work/a": "not writable", "/work/b": "is a directory" } });
+    const result = await t.service.getSecrets.execute(two, t.context());
+    expect(result.text).toBe(
+      "Cannot write: /work/a (not writable), /work/b (is a directory). The user was not asked.",
+    );
   });
 });

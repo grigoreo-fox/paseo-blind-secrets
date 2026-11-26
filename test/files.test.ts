@@ -2,7 +2,7 @@ import { chmod, lstat, mkdir, mkdtemp, readdir, stat, symlink, writeFile, readFi
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { MAX_SECRET_BYTES, readSecret, stageSecret, writeSecret } from "../server/files";
+import { checkWritable, MAX_SECRET_BYTES, readSecret, stageSecret, writeSecret } from "../server/files";
 
 async function tmp() {
   return mkdtemp(join(tmpdir(), "blind-secrets-"));
@@ -146,5 +146,48 @@ describe("secret files", () => {
     const { execFileSync } = await import("node:child_process");
     execFileSync("mkfifo", [fifo]);
     await expect(readSecret(fifo)).rejects.toThrow(`not readable: ${fifo}`);
+  });
+});
+
+describe("checkWritable", () => {
+  it("accepts a new file whose parent folders do not exist yet, without creating them", async () => {
+    const dir = await tmp();
+    await expect(checkWritable(join(dir, "a", "b", "token"))).resolves.toBeUndefined();
+    expect(await readdir(dir)).toEqual([]);
+  });
+
+  it("accepts an existing file", async () => {
+    const dir = await tmp();
+    const file = join(dir, "token");
+    await writeFile(file, "old");
+    await expect(checkWritable(file)).resolves.toBeUndefined();
+  });
+
+  it("refuses a directory target", async () => {
+    const dir = await tmp();
+    const target = join(dir, "adir");
+    await mkdir(target);
+    await expect(checkWritable(target)).rejects.toThrow(`is a directory: ${target}`);
+  });
+
+  it("refuses when a parent is a file", async () => {
+    const dir = await tmp();
+    const parent = join(dir, "afile");
+    await writeFile(parent, "x");
+    const target = join(parent, "sub", "token");
+    await expect(checkWritable(target)).rejects.toThrow(`parent is not a directory: ${target}`);
+  });
+
+  it.skipIf(process.getuid?.() === 0)("refuses a folder the user cannot write to", async () => {
+    const dir = await tmp();
+    const locked = join(dir, "locked");
+    await mkdir(locked);
+    await chmod(locked, 0o500);
+    const target = join(locked, "token");
+    try {
+      await expect(checkWritable(target)).rejects.toThrow(`not writable: ${target}`);
+    } finally {
+      await chmod(locked, 0o700);
+    }
   });
 });

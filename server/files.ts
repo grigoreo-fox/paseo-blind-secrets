@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import { lstat, mkdir, open, readFile, rename, rm, stat } from "node:fs/promises";
+import { access, constants, lstat, mkdir, open, readFile, rename, rm, stat } from "node:fs/promises";
 import { basename, dirname, join } from "node:path";
 
 export const MAX_SECRET_BYTES = 64 * 1024;
@@ -39,6 +39,32 @@ export async function stageSecret(absPath: string, value: string): Promise<Stage
       }
     },
   };
+}
+
+export async function checkWritable(absPath: string): Promise<void> {
+  const existing = await lstat(absPath).catch(() => null);
+  if (existing?.isDirectory()) throw new Error(`is a directory: ${absPath}`);
+  let dir = dirname(absPath);
+  for (;;) {
+    let info;
+    try {
+      info = await stat(dir);
+    } catch (error) {
+      const code = (error as NodeJS.ErrnoException).code;
+      if (code === "ENOTDIR") throw new Error(`parent is not a directory: ${absPath}`);
+      const up = dirname(dir);
+      if (code !== "ENOENT" || up === dir) throw new Error(`not writable: ${absPath}`);
+      dir = up;
+      continue;
+    }
+    if (!info.isDirectory()) throw new Error(`parent is not a directory: ${absPath}`);
+    try {
+      await access(dir, constants.W_OK | constants.X_OK);
+    } catch {
+      throw new Error(`not writable: ${absPath}`);
+    }
+    return;
+  }
 }
 
 export async function writeSecret(absPath: string, value: string): Promise<void> {

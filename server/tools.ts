@@ -14,6 +14,7 @@ export interface SecretDeps {
   files: {
     stage(absPath: string, value: string): Promise<Staged>;
     read(absPath: string): Promise<string>;
+    checkWritable(absPath: string): Promise<void>;
   };
   resolve(cwd: string, input: string): string;
   appendRow: AppendRow;
@@ -28,6 +29,8 @@ const STATUS = { submitted: "done", rejected: "rejected", expired: "expired" } a
 function duplicate(labels: string[]): boolean {
   return new Set(labels).size !== labels.length;
 }
+
+const NOT_ASKED = "The user was not asked.";
 
 function reason(error: string): string {
   const cut = error.indexOf(": ");
@@ -75,6 +78,18 @@ export function createSecretService(deps: SecretDeps) {
     return { isError: true, text: outcome.kind === "rejected" ? DECLINED : TIMEOUT };
   }
 
+  async function problemsOf(items: Items, check: (item: Items[number]) => Promise<unknown>) {
+    const found: string[] = [];
+    for (const item of items) {
+      try {
+        await check(item);
+      } catch (error) {
+        found.push(`${item.resolvedPath} (${reason((error as Error).message)})`);
+      }
+    }
+    return found.join(", ");
+  }
+
   const getSecrets = defineAgentTool({
     name: "get_secrets",
     title: "Get secrets from the user",
@@ -91,6 +106,13 @@ export function createSecretService(deps: SecretDeps) {
         resolvedPath: deps.resolve(context.agent.cwd, s.path),
         ...(s.description ? { description: s.description } : {}),
       }));
+      const paths = items.map((i) => i.resolvedPath);
+      const repeated = paths.find((p, index) => paths.indexOf(p) !== index);
+      if (repeated) {
+        return { isError: true, text: `Two secrets point to the same file: ${repeated}. ${NOT_ASKED}` };
+      }
+      const problems = await problemsOf(items, (item) => files.checkWritable(item.resolvedPath));
+      if (problems) return { isError: true, text: `Cannot write: ${problems}. ${NOT_ASKED}` };
       const { outcome } = await run("get", items, context);
       if (outcome.kind !== "submitted") return failure(outcome);
       return { text: `Wrote ${items.length} secret(s): ${items.map((i) => i.resolvedPath).join(", ")}` };
@@ -112,6 +134,8 @@ export function createSecretService(deps: SecretDeps) {
         path: s.path,
         resolvedPath: deps.resolve(context.agent.cwd, s.path),
       }));
+      const problems = await problemsOf(items, (item) => files.read(item.resolvedPath));
+      if (problems) return { isError: true, text: `Cannot show: ${problems}. ${NOT_ASKED}` };
       const { outcome, errors } = await run("show", items, context);
       if (outcome.kind !== "submitted") return failure(outcome);
       const shown = items.filter((i) => !errors.has(i.label));

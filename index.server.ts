@@ -1,5 +1,5 @@
 import type { PluginServerContext } from "@getpaseo/plugin/server";
-import { readSecret, stageSecret } from "./server/files";
+import { checkWritable, readSecret, stageSecret } from "./server/files";
 import { attachTools } from "./server/hook";
 import { resolveSecretPath } from "./server/paths";
 import { createRegistry } from "./server/requests";
@@ -11,7 +11,7 @@ export default function contribute(server: PluginServerContext) {
   const registry = createRegistry();
   const { getSecrets, showSecrets, handlers } = createSecretService({
     registry,
-    files: { stage: stageSecret, read: readSecret },
+    files: { stage: stageSecret, read: readSecret, checkWritable },
     resolve: (cwd, input) => resolveSecretPath(cwd, input),
     appendRow,
   });
