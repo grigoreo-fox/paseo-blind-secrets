@@ -36,4 +36,30 @@ describe("contracts", () => {
     };
     expect(secretRowData.parse(row).items[0].label).toBe("a");
   });
+
+  it("requestSecretsInput accepts multiline and a known format", () => {
+    const parsed = requestSecretsInput.safeParse({
+      secrets: [{ name: "k", path: "k.pem", multiline: true, format: "pem" }],
+    });
+    expect(parsed.success).toBe(true);
+  });
+
+  it("requestSecretsInput refuses an unknown format", () => {
+    expect(
+      requestSecretsInput.safeParse({ secrets: [{ name: "k", path: "k", format: "xml" }] }).success,
+    ).toBe(false);
+  });
+
+  it("secretRowData carries multiline and format but still no value", () => {
+    const row = {
+      requestId: "r1",
+      kind: "get",
+      status: "pending",
+      items: [{ label: "k", path: "p", resolvedPath: "/p", multiline: true, format: "json" }],
+    };
+    expect(secretRowData.parse(row).items[0].format).toBe("json");
+    expect(() =>
+      secretRowData.parse({ ...row, items: [{ ...row.items[0], value: "x" }] }),
+    ).toThrow();
+  });
 });

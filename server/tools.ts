@@ -5,6 +5,7 @@ import {
   type AgentToolResult,
 } from "@getpaseo/plugin/server";
 import { requestSecretsInput, sendSecretsInput, type SecretRowData } from "../shared/contracts";
+import { checkFormat } from "../shared/format";
 import { MAX_SECRET_BYTES, type Staged } from "./files";
 import type { Outcome, Registry } from "./requests";
 import type { AppendRow } from "./rows";
@@ -105,6 +106,8 @@ export function createSecretService(deps: SecretDeps) {
         path: s.path,
         resolvedPath: deps.resolve(context.agent.cwd, s.path),
         ...(s.description ? { description: s.description } : {}),
+        ...(s.multiline ? { multiline: true } : {}),
+        ...(s.format && s.format !== "any" ? { format: s.format } : {}),
       }));
       const paths = items.map((i) => i.resolvedPath);
       const repeated = paths.find((p, index) => paths.indexOf(p) !== index);
@@ -196,6 +199,9 @@ export function createSecretService(deps: SecretDeps) {
         if (Buffer.byteLength(values[label], "utf8") > MAX_SECRET_BYTES) {
           throw new Error("value_too_large");
         }
+        const item = data.items.find((i) => i.label === label);
+        const wrong = checkFormat(values[label], item?.format ?? "any");
+        if (wrong) throw new Error(wrong);
       }
       if (!registry.claim(requestId)) throw new Error("request_busy");
       try {

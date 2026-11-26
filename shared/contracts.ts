@@ -1,6 +1,8 @@
 import { defineRpc } from "@getpaseo/plugin";
 import { z } from "zod";
 
+export const secretFormat = z.enum(["any", "json", "pem"]);
+
 export const requestSecretsInput = z.object({
   secrets: z
     .array(
@@ -8,6 +10,13 @@ export const requestSecretsInput = z.object({
         name: z.string().min(1).describe("Label shown to the user and used as the key"),
         path: z.string().min(1).describe("File to write the secret to"),
         description: z.string().optional().describe("What the secret is for"),
+        multiline: z
+          .boolean()
+          .optional()
+          .describe("True for a multi-line value such as a private key or a credentials file"),
+        format: secretFormat
+          .optional()
+          .describe("Check the pasted value before it is written: pem, json, or any (default)"),
       }),
     )
     .min(1),
@@ -38,6 +47,8 @@ export const secretRowData = z
           path: z.string(),
           resolvedPath: z.string(),
           description: z.string().optional(),
+          multiline: z.boolean().optional(),
+          format: secretFormat.optional(),
           error: z.string().optional(),
         })
         .strict(),

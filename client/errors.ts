@@ -4,6 +4,8 @@ export type SecretErrorKey =
   | "tooLarge"
   | "writeFailed"
   | "valueTooLarge"
+  | "invalidJson"
+  | "invalidPem"
   | "requestGone";
 
 export interface ParsedSecretError {
@@ -20,6 +22,8 @@ const PATH_ERRORS: ReadonlyArray<readonly [string, SecretErrorKey]> = [
 
 const CODE_ERRORS: Readonly<Record<string, SecretErrorKey>> = {
   value_too_large: "valueTooLarge",
+  invalid_json: "invalidJson",
+  invalid_pem: "invalidPem",
   unknown_request: "requestGone",
   request_busy: "requestGone",
 };

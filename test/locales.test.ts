@@ -46,6 +46,11 @@ describe("parseSecretError", () => {
     expect(parseSecretError("write failed: /work/a")).toEqual({ key: "writeFailed", path: "/work/a" });
   });
 
+  it("maps the format errors without a path, through the daemon wrapper too", () => {
+    expect(parseSecretError("invalid_pem")).toEqual({ key: "invalidPem" });
+    expect(parseSecretError("Request failed: invalid_json requestType=plugin.rpc.invoke.request code=handler_error")).toEqual({ key: "invalidJson" });
+  });
+
   it("maps the value size error and stale requests without a path", () => {
     expect(parseSecretError("value_too_large")).toEqual({ key: "valueTooLarge" });
     expect(parseSecretError("unknown_request")).toEqual({ key: "requestGone" });
@@ -87,6 +92,8 @@ describe("parseSecretError", () => {
       "write failed: p",
       "value_too_large",
       "unknown_request",
+      "invalid_json",
+      "invalid_pem",
     ]) {
       expect(keys).toContain(parseSecretError(message)!.key);
     }

@@ -442,3 +442,69 @@ describe("checks before the user is asked", () => {
     );
   });
 });
+
+describe("multi-line secrets and formats", () => {
+  const PEM = "-----BEGIN PRIVATE KEY-----\nMIIEvQ\n-----END PRIVATE KEY-----\n";
+  const pem = { secrets: [{ name: "key", path: "key.pem", multiline: true, format: "pem" as const }] };
+
+  it("puts multiline and format into the row and keeps the default out of it", async () => {
+    const t = setup();
+    const run = t.service.requestSecrets.execute(
+      { secrets: [pem.secrets[0], { name: "plain", path: "p" }] },
+      t.context(),
+    );
+    await tick();
+    expect(t.rows[0].items[0]).toMatchObject({ multiline: true, format: "pem" });
+    expect(t.rows[0].items[1].multiline).toBeUndefined();
+    expect(t.rows[0].items[1].format).toBeUndefined();
+    await t.service.handlers.reject({ requestId: t.pendingId() });
+    await run;
+  });
+
+  it("writes a multi-line value byte for byte, trailing newline and CRLF included", async () => {
+    const t = setup();
+    const run = t.service.requestSecrets.execute(pem, t.context());
+    await tick();
+    await t.service.handlers.submit({ requestId: t.pendingId(), values: { key: PEM } });
+    await run;
+    expect(t.written).toEqual([{ path: "/work/key.pem", value: PEM }]);
+    const crlf = setup();
+    const run2 = crlf.service.requestSecrets.execute(
+      { secrets: [{ name: "a", path: "a", multiline: true }] },
+      crlf.context(),
+    );
+    await tick();
+    await crlf.service.handlers.submit({ requestId: crlf.pendingId(), values: { a: "x\r\ny\r\n" } });
+    await run2;
+    expect(crlf.written[0].value).toBe("x\r\ny\r\n");
+  });
+
+  it("refuses a value that does not match the requested format, writes nothing and stays pending", async () => {
+    const t = setup();
+    const run = t.service.requestSecrets.execute(pem, t.context());
+    await tick();
+    const requestId = t.pendingId();
+    await expect(
+      t.service.handlers.submit({ requestId, values: { key: "not a key" } }),
+    ).rejects.toThrow("invalid_pem");
+    expect(t.written).toEqual([]);
+    expect(t.registry.get(requestId)).toBeDefined();
+    await t.service.handlers.submit({ requestId, values: { key: PEM } });
+    expect((await run).isError).toBeFalsy();
+  });
+
+  it("checks json too, and names which item failed only by its label", async () => {
+    const t = setup();
+    const run = t.service.requestSecrets.execute(
+      { secrets: [{ name: "sa", path: "sa.json", format: "json" as const }] },
+      t.context(),
+    );
+    await tick();
+    const requestId = t.pendingId();
+    await expect(
+      t.service.handlers.submit({ requestId, values: { sa: '{"a":' } }),
+    ).rejects.toThrow("invalid_json");
+    await t.service.handlers.reject({ requestId });
+    await run;
+  });
+});
