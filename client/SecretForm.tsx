@@ -2,6 +2,7 @@ import { useRpc, type PluginHostProps } from "@getpaseo/plugin/client";
 import { copyText } from "@getpaseo/plugin/client/ui";
 import { useEffect, useMemo, useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
+import { maskValue } from "./mask";
 import {
   secretsRead,
   secretsReject,
@@ -182,12 +183,11 @@ function ShowForm({ data, theme, layout }: Props) {
               <Text style={styles.error}>{item.error}</Text>
             ) : (
               <>
-                <TextInput
-                  value={text}
-                  editable={false}
-                  secureTextEntry={!shown}
-                  style={styles.input}
-                />
+                <View style={styles.input}>
+                  <Text selectable={shown} style={styles.label}>
+                    {maskValue(text, shown) || " "}
+                  </Text>
+                </View>
                 <View style={styles.row}>
                   <Pressable
                     accessibilityRole="button"
