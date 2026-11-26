@@ -4,7 +4,9 @@ A [Paseo](https://paseo.sh) plugin that lets you pass secrets to an AI agent, an
 
 You no longer need a terminal to move an API key or a generated password. The agent asks, a private card appears in the chat, and the value goes straight to a file.
 
-<!-- screenshots: assets/screenshots/get-secrets.png, assets/screenshots/show-secrets.png -->
+| The agent asks for secrets | The agent shows a secret |
+| --- | --- |
+| ![The agent asks for a Stripe key and a database password in a private card](assets/screenshots/get-secrets-dark.png) | ![The agent shows a saved password in a private card with an eye icon and Copy](assets/screenshots/show-secrets-dark.png) |
 
 ## What it adds
 
