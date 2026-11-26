@@ -3,6 +3,7 @@ import { copyText, Icon } from "@getpaseo/plugin/client/ui";
 import { useEffect, useMemo, useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
 import { parseSecretError } from "./errors";
+import { blindEyeSvg } from "./icons";
 import { maskValue } from "./mask";
 import { messages } from "./messages";
 import {
@@ -26,6 +27,7 @@ function useStyles(theme: Theme, layout: Layout) {
   return useMemo(
     () => ({
       box: { gap: layout.compact ? 8 : 12 },
+      header: { flexDirection: "row" as const, alignItems: "center" as const, gap: 8 },
       title: { color: theme.colors.foreground, fontWeight: "600" as const },
       muted: { color: theme.colors.foregroundMuted, fontSize: 12 },
       label: { color: theme.colors.foreground },
@@ -123,7 +125,10 @@ function GetForm({ data, theme, layout }: Props) {
 
   return (
     <View style={styles.box}>
-      <Text style={styles.title}>{t("getTitle")}</Text>
+      <View style={styles.header}>
+        <Icon icon={{ svg: blindEyeSvg }} size={20} color={theme.colors.foreground} />
+        <Text style={styles.title}>{t("getTitle")}</Text>
+      </View>
       <Text style={styles.muted}>{t("getHint")}</Text>
       {data.items.map((item) => (
         <View key={item.label} style={{ gap: 4 }}>
@@ -197,7 +202,10 @@ function ShowForm({ data, theme, layout }: Props) {
 
   return (
     <View style={styles.box}>
-      <Text style={styles.title}>{t("showTitle")}</Text>
+      <View style={styles.header}>
+        <Icon icon={{ svg: blindEyeSvg }} size={20} color={theme.colors.foreground} />
+        <Text style={styles.title}>{t("showTitle")}</Text>
+      </View>
       <Text style={styles.muted}>{t("showHint")}</Text>
       {(items ?? []).map((item) => {
         const shown = revealed[item.label] === true;
