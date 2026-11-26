@@ -1,30 +1,60 @@
-import { chmod, mkdir, open, writeFile } from "node:fs/promises";
-import { dirname } from "node:path";
+import { randomBytes } from "node:crypto";
+import { mkdir, open, readFile, rename, rm, stat } from "node:fs/promises";
+import { basename, dirname, join } from "node:path";
 
 export const MAX_SECRET_BYTES = 64 * 1024;
 
+export interface Staged {
+  commit(): Promise<void>;
+  discard(): Promise<void>;
+}
+
+export async function stageSecret(absPath: string, value: string): Promise<Staged> {
+  const dir = dirname(absPath);
+  const temp = join(dir, `.${basename(absPath)}.${randomBytes(6).toString("hex")}.tmp`);
+  const discard = () => rm(temp, { force: true });
+  try {
+    await mkdir(dir, { recursive: true, mode: 0o700 });
+    const handle = await open(temp, "wx", 0o600);
+    try {
+      await handle.writeFile(value, "utf8");
+      await handle.sync();
+    } finally {
+      await handle.close();
+    }
+  } catch {
+    await discard();
+    throw new Error(`write failed: ${absPath}`);
+  }
+  return {
+    discard,
+    async commit() {
+      try {
+        await rename(temp, absPath);
+      } catch {
+        await discard();
+        throw new Error(`write failed: ${absPath}`);
+      }
+    },
+  };
+}
+
 export async function writeSecret(absPath: string, value: string): Promise<void> {
-  await mkdir(dirname(absPath), { recursive: true });
-  await writeFile(absPath, value, { encoding: "utf8", mode: 0o600 });
-  await chmod(absPath, 0o600);
+  await (await stageSecret(absPath, value)).commit();
 }
 
 export async function readSecret(absPath: string): Promise<string> {
   let bytes: Buffer;
   try {
-    const handle = await open(absPath, "r");
-    try {
-      const { size } = await handle.stat();
-      if (size > MAX_SECRET_BYTES) throw new Error(`too large: ${absPath}`);
-      bytes = Buffer.alloc(size);
-      await handle.read(bytes, 0, size, 0);
-    } finally {
-      await handle.close();
-    }
+    const info = await stat(absPath);
+    if (!info.isFile()) throw new Error("not a file");
+    if (info.size > MAX_SECRET_BYTES) throw new Error(`too large: ${absPath}`);
+    bytes = await readFile(absPath);
   } catch (error) {
     if (error instanceof Error && error.message.startsWith("too large: ")) throw error;
     throw new Error(`not readable: ${absPath}`);
   }
+  if (bytes.length > MAX_SECRET_BYTES) throw new Error(`too large: ${absPath}`);
   if (bytes.includes(0)) throw new Error(`not text: ${absPath}`);
   try {
     return new TextDecoder("utf-8", { fatal: true }).decode(bytes);

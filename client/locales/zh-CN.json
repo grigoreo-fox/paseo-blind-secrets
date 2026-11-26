@@ -22,5 +22,7 @@
   "notReadable": "无法读取 {{path}}",
   "notText": "{{path}} 不是文本文件",
   "tooLarge": "{{path}} 太大（上限 64 KiB）",
-  "valueTooLarge": "该值太大（上限 64 KiB）"
+  "valueTooLarge": "该值太大（上限 64 KiB）",
+  "writeFailed": "无法写入 {{path}}",
+  "requestGone": "此请求已不再有效"
 }

@@ -22,5 +22,7 @@
   "notReadable": "Cannot read {{path}}",
   "notText": "{{path}} is not a text file",
   "tooLarge": "{{path}} is too large (64 KiB limit)",
-  "valueTooLarge": "The value is too large (64 KiB limit)"
+  "valueTooLarge": "The value is too large (64 KiB limit)",
+  "writeFailed": "Could not write {{path}}",
+  "requestGone": "This request is no longer active"
 }

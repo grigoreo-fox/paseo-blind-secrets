@@ -22,5 +22,7 @@
   "notReadable": "{{path}} を読み取れません",
   "notText": "{{path}} はテキストファイルではありません",
   "tooLarge": "{{path}} が大きすぎます（上限 64 KiB）",
-  "valueTooLarge": "値が大きすぎます（上限 64 KiB）"
+  "valueTooLarge": "値が大きすぎます（上限 64 KiB）",
+  "writeFailed": "{{path}} に書き込めませんでした",
+  "requestGone": "このリクエストはすでに無効です"
 }

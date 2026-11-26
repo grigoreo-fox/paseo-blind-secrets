@@ -88,4 +88,39 @@ describe("registry", () => {
     registry.settle("r1", { kind: "rejected" });
     expect(seen).toEqual([]);
   });
+
+  it("claim succeeds once and a second claim fails", () => {
+    const registry = createRegistry();
+    registry.open({ agentId: "a", data: row("r1") });
+    expect(registry.claim("r1")).toBe(true);
+    expect(registry.claim("r1")).toBe(false);
+    expect(registry.claim("nope")).toBe(false);
+  });
+
+  it("refuses to settle a claimed request unless the claimer does it", async () => {
+    const registry = createRegistry();
+    const { outcome } = registry.open({ agentId: "a", data: row("r1") });
+    registry.claim("r1");
+    expect(registry.settle("r1", { kind: "rejected" })).toBe(false);
+    expect(registry.settle("r1", { kind: "submitted" }, { claimed: true })).toBe(true);
+    expect(await outcome).toEqual({ kind: "submitted" });
+  });
+
+  it("defers expiry while claimed and expires on release", async () => {
+    const registry = createRegistry({ timeoutMs: 1000 });
+    const { outcome } = registry.open({ agentId: "a", data: row("r1") });
+    registry.claim("r1");
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(registry.get("r1")).toBeDefined();
+    registry.release("r1");
+    expect(await outcome).toEqual({ kind: "expired" });
+  });
+
+  it("lets a claimed request be claimed again after release", () => {
+    const registry = createRegistry();
+    registry.open({ agentId: "a", data: row("r1") });
+    registry.claim("r1");
+    registry.release("r1");
+    expect(registry.claim("r1")).toBe(true);
+  });
 });

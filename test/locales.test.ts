@@ -42,17 +42,31 @@ describe("parseSecretError", () => {
     expect(parseSecretError("too large: /work/c")).toEqual({ key: "tooLarge", path: "/work/c" });
   });
 
-  it("maps the value size error without a path", () => {
+  it("maps a failed write with the path", () => {
+    expect(parseSecretError("write failed: /work/a")).toEqual({ key: "writeFailed", path: "/work/a" });
+  });
+
+  it("maps the value size error and stale requests without a path", () => {
     expect(parseSecretError("value_too_large")).toEqual({ key: "valueTooLarge" });
+    expect(parseSecretError("unknown_request")).toEqual({ key: "requestGone" });
+    expect(parseSecretError("request_busy")).toEqual({ key: "requestGone" });
   });
 
   it("returns null for any other error text", () => {
-    expect(parseSecretError("unknown_request")).toBeNull();
+    expect(parseSecretError("EACCES: permission denied, open '/x'")).toBeNull();
+    expect(parseSecretError("unknown_label")).toBeNull();
   });
 
   it("only uses keys that exist in the English file", () => {
     const keys = Object.keys(load("en"));
-    for (const message of ["not readable: p", "not text: p", "too large: p", "value_too_large"]) {
+    for (const message of [
+      "not readable: p",
+      "not text: p",
+      "too large: p",
+      "write failed: p",
+      "value_too_large",
+      "unknown_request",
+    ]) {
       expect(keys).toContain(parseSecretError(message)!.key);
     }
   });

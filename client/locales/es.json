@@ -22,5 +22,7 @@
   "notReadable": "No se puede leer {{path}}",
   "notText": "{{path}} no es un archivo de texto",
   "tooLarge": "{{path}} es demasiado grande (límite de 64 KiB)",
-  "valueTooLarge": "El valor es demasiado grande (límite de 64 KiB)"
+  "valueTooLarge": "El valor es demasiado grande (límite de 64 KiB)",
+  "writeFailed": "No se pudo escribir {{path}}",
+  "requestGone": "Esta solicitud ya no está activa"
 }

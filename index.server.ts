@@ -1,5 +1,6 @@
 import type { PluginServerContext } from "@getpaseo/plugin/server";
-import { readSecret, writeSecret } from "./server/files";
+import { readSecret, stageSecret } from "./server/files";
+import { attachTools } from "./server/hook";
 import { resolveSecretPath } from "./server/paths";
 import { createRegistry } from "./server/requests";
 import { appendRow } from "./server/rows";
@@ -10,15 +11,14 @@ export default function contribute(server: PluginServerContext) {
   const registry = createRegistry();
   const { getSecrets, showSecrets, handlers } = createSecretService({
     registry,
-    files: { write: writeSecret, read: readSecret },
+    files: { stage: stageSecret, read: readSecret },
     resolve: (cwd, input) => resolveSecretPath(cwd, input),
     appendRow,
   });
 
-  server.addHook("agent.open.before", async ({ request }) => {
-    if (request.background || request.purpose !== "interactive") return;
-    return { ...request, tools: [...request.tools, getSecrets, showSecrets] };
-  });
+  server.addHook("agent.open.before", async ({ request }) =>
+    attachTools(request, [getSecrets, showSecrets]),
+  );
   server.handle(secretsSubmit, handlers.submit);
   server.handle(secretsReject, handlers.reject);
   server.handle(secretsRead, handlers.read);

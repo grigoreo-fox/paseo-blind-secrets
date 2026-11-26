@@ -102,7 +102,7 @@ function GetForm({ data, theme, layout }: Props) {
   const [error, setError] = useState("");
   const describe = (message: string) => {
     const parsed = parseSecretError(message);
-    return parsed ? t(parsed.key, { path: parsed.path ?? "" }) : message;
+    return t(parsed ? parsed.key : "requestFailed", { path: parsed?.path ?? "" });
   };
   const ready = data.items.every((item) => (values[item.label] ?? "") !== "");
 
@@ -179,7 +179,7 @@ function ShowForm({ data, theme, layout }: Props) {
   const [note, setNote] = useState("");
   const describe = (message: string) => {
     const parsed = parseSecretError(message);
-    return parsed ? t(parsed.key, { path: parsed.path ?? "" }) : message;
+    return t(parsed ? parsed.key : "requestFailed", { path: parsed?.path ?? "" });
   };
 
   useEffect(() => {
@@ -205,6 +205,7 @@ function ShowForm({ data, theme, layout }: Props) {
         return (
           <View key={item.label} style={{ gap: 4 }}>
             <Text style={styles.label}>{item.label}</Text>
+            <Text style={styles.muted}>{data.items.find((i) => i.label === item.label)?.resolvedPath}</Text>
             {item.error ? (
               <Text style={styles.error}>{describe(item.error)}</Text>
             ) : (

@@ -1,8 +1,8 @@
-import { chmod, mkdtemp, stat, writeFile, readFile } from "node:fs/promises";
+import { chmod, lstat, mkdir, mkdtemp, readdir, stat, symlink, writeFile, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { MAX_SECRET_BYTES, readSecret, writeSecret } from "../server/files";
+import { MAX_SECRET_BYTES, readSecret, stageSecret, writeSecret } from "../server/files";
 
 async function tmp() {
   return mkdtemp(join(tmpdir(), "blind-secrets-"));
@@ -73,5 +73,71 @@ describe("secret files", () => {
     const file = join(await tmp(), "utf8");
     await writeSecret(file, "пароль-密码");
     expect(await readSecret(file)).toBe("пароль-密码");
+  });
+
+  it("stages without touching the target until commit, and leaves no temp file after commit", async () => {
+    const dir = await tmp();
+    const file = join(dir, "token");
+    await writeFile(file, "old");
+    const staged = await stageSecret(file, "new");
+    expect(await readFile(file, "utf8")).toBe("old");
+    await staged.commit();
+    expect(await readFile(file, "utf8")).toBe("new");
+    expect(await readdir(dir)).toEqual(["token"]);
+  });
+
+  it("discard removes the staged file and keeps the target", async () => {
+    const dir = await tmp();
+    const file = join(dir, "token");
+    await writeFile(file, "old");
+    const staged = await stageSecret(file, "new");
+    await staged.discard();
+    expect(await readFile(file, "utf8")).toBe("old");
+    expect(await readdir(dir)).toEqual(["token"]);
+  });
+
+  it("never exposes the new content under a wider mode of the old file", async () => {
+    const dir = await tmp();
+    const file = join(dir, "token");
+    await writeFile(file, "old");
+    await chmod(file, 0o644);
+    const staged = await stageSecret(file, "new");
+    const temp = (await readdir(dir)).find((n) => n !== "token")!;
+    expect((await stat(join(dir, temp))).mode & 0o777).toBe(0o600);
+    await staged.discard();
+  });
+
+  it("replaces a symlink instead of writing through it", async () => {
+    const dir = await tmp();
+    const target = join(dir, "target");
+    const link = join(dir, "link");
+    await writeFile(target, "keep");
+    await symlink(target, link);
+    await writeSecret(link, "new");
+    expect((await lstat(link)).isSymbolicLink()).toBe(false);
+    expect(await readFile(link, "utf8")).toBe("new");
+    expect(await readFile(target, "utf8")).toBe("keep");
+  });
+
+  it("reports a write failure with the path only", async () => {
+    const dir = await tmp();
+    const file = join(dir, "adir");
+    await mkdir(file);
+    const staged = await stageSecret(file, "v");
+    await expect(staged.commit()).rejects.toThrow(`write failed: ${file}`);
+    expect(await readdir(dir)).toEqual(["adir"]);
+  });
+
+  it("refuses a directory without opening it as a file", async () => {
+    const dir = await tmp();
+    await expect(readSecret(dir)).rejects.toThrow(`not readable: ${dir}`);
+  });
+
+  it("does not hang on a FIFO", async () => {
+    const dir = await tmp();
+    const fifo = join(dir, "pipe");
+    const { execFileSync } = await import("node:child_process");
+    execFileSync("mkfifo", [fifo]);
+    await expect(readSecret(fifo)).rejects.toThrow(`not readable: ${fifo}`);
   });
 });
