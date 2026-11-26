@@ -1,6 +1,6 @@
 {
   "id": "blind-secrets",
-  "name": "blind-secrets",
+  "name": "Blind Secrets",
   "description": "Give an agent secrets, and read its secrets, without the model seeing them",
   "icon": "assets/icon.png",
   "media": [],

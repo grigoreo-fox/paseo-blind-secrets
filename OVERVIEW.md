@@ -1,4 +1,4 @@
-Blind secrets lets you pass secrets to an agent, and read secrets an agent made, without the values ever entering the chat or the model's context.
+Blind Secrets lets you pass secrets to an agent, and read secrets an agent made, without the values ever entering the chat or the model's context.
 
 It adds two tools to every interactive agent:
 
