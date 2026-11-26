@@ -52,6 +52,15 @@ describe("parseSecretError", () => {
     expect(parseSecretError("request_busy")).toEqual({ key: "requestGone" });
   });
 
+  it("sees through the daemon's Request failed wrapper", () => {
+    expect(parseSecretError("Request failed: write failed: /work/a")).toEqual({
+      key: "writeFailed",
+      path: "/work/a",
+    });
+    expect(parseSecretError("Request failed: value_too_large")).toEqual({ key: "valueTooLarge" });
+    expect(parseSecretError("Request failed: unknown_request")).toEqual({ key: "requestGone" });
+  });
+
   it("returns null for any other error text", () => {
     expect(parseSecretError("EACCES: permission denied, open '/x'")).toBeNull();
     expect(parseSecretError("unknown_label")).toBeNull();

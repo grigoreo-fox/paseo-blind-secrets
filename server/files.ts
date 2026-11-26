@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import { mkdir, open, readFile, rename, rm, stat } from "node:fs/promises";
+import { lstat, mkdir, open, readFile, rename, rm, stat } from "node:fs/promises";
 import { basename, dirname, join } from "node:path";
 
 export const MAX_SECRET_BYTES = 64 * 1024;
@@ -12,8 +12,10 @@ export interface Staged {
 export async function stageSecret(absPath: string, value: string): Promise<Staged> {
   const dir = dirname(absPath);
   const temp = join(dir, `.${basename(absPath)}.${randomBytes(6).toString("hex")}.tmp`);
-  const discard = () => rm(temp, { force: true });
+  const discard = () => rm(temp, { force: true }).catch(() => undefined);
   try {
+    const existing = await lstat(absPath).catch(() => null);
+    if (existing?.isDirectory()) throw new Error("target is a directory");
     await mkdir(dir, { recursive: true, mode: 0o700 });
     const handle = await open(temp, "wx", 0o600);
     try {

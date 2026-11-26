@@ -119,13 +119,20 @@ describe("secret files", () => {
     expect(await readFile(target, "utf8")).toBe("keep");
   });
 
-  it("reports a write failure with the path only", async () => {
+  it("refuses to stage onto a directory, before anything is written", async () => {
     const dir = await tmp();
-    const file = join(dir, "adir");
-    await mkdir(file);
-    const staged = await stageSecret(file, "v");
-    await expect(staged.commit()).rejects.toThrow(`write failed: ${file}`);
+    const target = join(dir, "adir");
+    await mkdir(target);
+    await expect(stageSecret(target, "v")).rejects.toThrow(`write failed: ${target}`);
     expect(await readdir(dir)).toEqual(["adir"]);
+  });
+
+  it("refuses to stage when the parent is a file", async () => {
+    const dir = await tmp();
+    const parent = join(dir, "afile");
+    await writeFile(parent, "x");
+    await expect(stageSecret(join(parent, "token"), "v")).rejects.toThrow("write failed:");
+    expect(await readdir(dir)).toEqual(["afile"]);
   });
 
   it("refuses a directory without opening it as a file", async () => {
