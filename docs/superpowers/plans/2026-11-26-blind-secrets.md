@@ -21,6 +21,7 @@
 - Client code: React Native primitives only, colours from `theme.colors`, padding from `layout.compact`, no DOM globals, no `node:` imports outside `server/`.
 - Timeline row `kind: "secret-request"`, `version: 1`; row `id` is the request id.
 - Tools attach to agents with `request.background === false` and `purpose === "interactive"`.
+- Tool definitions (name, description, input schema) are constants and never depend on the agent or request. The OpenCode bridge rejects the same tool name with a different definition (`Conflicting Paseo tool definition`). When changing a definition during development, close or archive agents that hold the tool, then reload the plugin.
 
 ## Review Focus
 
