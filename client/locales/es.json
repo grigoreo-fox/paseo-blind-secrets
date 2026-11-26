@@ -19,5 +19,8 @@
   "summaryExpired": "Esta solicitud ha caducado",
   "requestFailed": "La solicitud falló",
   "readFailed": "No se pudieron leer los secretos",
-  "notReadable": "No se puede leer {{path}}"
+  "notReadable": "No se puede leer {{path}}",
+  "notText": "{{path}} no es un archivo de texto",
+  "tooLarge": "{{path}} es demasiado grande (límite de 64 KiB)",
+  "valueTooLarge": "El valor es demasiado grande (límite de 64 KiB)"
 }

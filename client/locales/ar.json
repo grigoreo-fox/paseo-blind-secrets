@@ -19,5 +19,8 @@
   "summaryExpired": "انتهت صلاحية هذا الطلب",
   "requestFailed": "فشل الطلب",
   "readFailed": "تعذّرت قراءة الأسرار",
-  "notReadable": "تعذّرت قراءة {{path}}"
+  "notReadable": "تعذّرت قراءة {{path}}",
+  "notText": "{{path}} ليس ملفًا نصيًا",
+  "tooLarge": "{{path}} كبير جدًا (الحد 64 كيبي بايت)",
+  "valueTooLarge": "القيمة كبيرة جدًا (الحد 64 كيبي بايت)"
 }

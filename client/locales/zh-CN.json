@@ -19,5 +19,8 @@
   "summaryExpired": "此请求已过期",
   "requestFailed": "请求失败",
   "readFailed": "无法读取密钥",
-  "notReadable": "无法读取 {{path}}"
+  "notReadable": "无法读取 {{path}}",
+  "notText": "{{path}} 不是文本文件",
+  "tooLarge": "{{path}} 太大（上限 64 KiB）",
+  "valueTooLarge": "该值太大（上限 64 KiB）"
 }

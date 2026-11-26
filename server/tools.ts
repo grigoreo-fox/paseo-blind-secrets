@@ -9,6 +9,7 @@ import {
   showSecretsInput,
   type SecretRowData,
 } from "../shared/contracts";
+import { MAX_SECRET_BYTES } from "./files";
 import type { Outcome, Registry } from "./requests";
 import type { AppendRow } from "./rows";
 
@@ -115,6 +116,9 @@ export function createSecretService(deps: SecretDeps) {
         }
         for (const label of labels) {
           if (!(label in values)) throw new Error("missing_value");
+          if (Buffer.byteLength(values[label], "utf8") > MAX_SECRET_BYTES) {
+            throw new Error("value_too_large");
+          }
         }
         for (const item of data.items) await files.write(item.resolvedPath, values[item.label]);
       }

@@ -19,5 +19,8 @@
   "summaryExpired": "このリクエストは期限切れです",
   "requestFailed": "リクエストに失敗しました",
   "readFailed": "シークレットを読み取れませんでした",
-  "notReadable": "{{path}} を読み取れません"
+  "notReadable": "{{path}} を読み取れません",
+  "notText": "{{path}} はテキストファイルではありません",
+  "tooLarge": "{{path}} が大きすぎます（上限 64 KiB）",
+  "valueTooLarge": "値が大きすぎます（上限 64 KiB）"
 }

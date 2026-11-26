@@ -2,7 +2,7 @@ import { useRpc, useTranslation, type PluginHostProps } from "@getpaseo/plugin/c
 import { copyText, Icon } from "@getpaseo/plugin/client/ui";
 import { useEffect, useMemo, useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
-import { notReadablePath } from "./errors";
+import { parseSecretError } from "./errors";
 import { maskValue } from "./mask";
 import { messages } from "./messages";
 import {
@@ -100,6 +100,10 @@ function GetForm({ data, theme, layout }: Props) {
   const [values, setValues] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const describe = (message: string) => {
+    const parsed = parseSecretError(message);
+    return parsed ? t(parsed.key, { path: parsed.path ?? "" }) : message;
+  };
   const ready = data.items.every((item) => (values[item.label] ?? "") !== "");
 
   useEffect(() => () => setValues({}), []);
@@ -111,7 +115,7 @@ function GetForm({ data, theme, layout }: Props) {
       await action();
       setValues({});
     } catch (e) {
-      setError(e instanceof Error ? e.message : t("requestFailed"));
+      setError(e instanceof Error ? describe(e.message) : t("requestFailed"));
     } finally {
       setBusy(false);
     }
@@ -173,6 +177,10 @@ function ShowForm({ data, theme, layout }: Props) {
   const [items, setItems] = useState<Shown[] | null>(null);
   const [revealed, setRevealed] = useState<Record<string, boolean>>({});
   const [note, setNote] = useState("");
+  const describe = (message: string) => {
+    const parsed = parseSecretError(message);
+    return parsed ? t(parsed.key, { path: parsed.path ?? "" }) : message;
+  };
 
   useEffect(() => {
     let live = true;
@@ -198,11 +206,7 @@ function ShowForm({ data, theme, layout }: Props) {
           <View key={item.label} style={{ gap: 4 }}>
             <Text style={styles.label}>{item.label}</Text>
             {item.error ? (
-              <Text style={styles.error}>
-                {notReadablePath(item.error) !== null
-                  ? t("notReadable", { path: notReadablePath(item.error) ?? "" })
-                  : item.error}
-              </Text>
+              <Text style={styles.error}>{describe(item.error)}</Text>
             ) : (
               <>
                 <View style={styles.valueBox}>

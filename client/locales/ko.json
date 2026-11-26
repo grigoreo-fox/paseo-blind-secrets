@@ -19,5 +19,8 @@
   "summaryExpired": "이 요청은 만료되었습니다",
   "requestFailed": "요청에 실패했습니다",
   "readFailed": "시크릿을 읽을 수 없습니다",
-  "notReadable": "{{path}}을(를) 읽을 수 없습니다"
+  "notReadable": "{{path}}을(를) 읽을 수 없습니다",
+  "notText": "{{path}}은(는) 텍스트 파일이 아닙니다",
+  "tooLarge": "{{path}}이(가) 너무 큽니다(최대 64 KiB)",
+  "valueTooLarge": "값이 너무 큽니다(최대 64 KiB)"
 }

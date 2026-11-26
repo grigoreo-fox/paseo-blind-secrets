@@ -19,5 +19,8 @@
   "summaryExpired": "This request expired",
   "requestFailed": "Request failed",
   "readFailed": "Could not read the secrets",
-  "notReadable": "Cannot read {{path}}"
+  "notReadable": "Cannot read {{path}}",
+  "notText": "{{path}} is not a text file",
+  "tooLarge": "{{path}} is too large (64 KiB limit)",
+  "valueTooLarge": "The value is too large (64 KiB limit)"
 }

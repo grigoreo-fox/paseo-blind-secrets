@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { AgentToolContext, AgentToolResult } from "@getpaseo/plugin/server";
 import { createRegistry } from "../server/requests";
+import { MAX_SECRET_BYTES } from "../server/files";
 import { createSecretService } from "../server/tools";
 import type { SecretRowData } from "../shared/contracts";
 
@@ -145,6 +146,43 @@ describe("get_secrets", () => {
     await run;
     expect(t.rows.at(-1)?.status).toBe("expired");
     expect(t.registry.listForAgent("agent-1")).toEqual([]);
+  });
+});
+
+describe("value size limit", () => {
+  it("refuses an oversized value for any item and writes nothing", async () => {
+    const t = setup();
+    const two = {
+      secrets: [
+        { name: "a", path: "a" },
+        { name: "b", path: "b" },
+      ],
+    };
+    const run = t.service.getSecrets.execute(two, t.context());
+    await tick();
+    const requestId = t.pendingId();
+    await expect(
+      t.service.handlers.submit({
+        requestId,
+        values: { a: "ok", b: "x".repeat(MAX_SECRET_BYTES + 1) },
+      }),
+    ).rejects.toThrow("value_too_large");
+    expect(t.written).toEqual([]);
+    await t.service.handlers.reject({ requestId });
+    await run;
+  });
+
+  it("measures the limit in bytes, not characters", async () => {
+    const t = setup();
+    const run = t.service.getSecrets.execute(ask, t.context());
+    await tick();
+    const requestId = t.pendingId();
+    const value = "я".repeat(MAX_SECRET_BYTES / 2 + 1);
+    await expect(
+      t.service.handlers.submit({ requestId, values: { token: value } }),
+    ).rejects.toThrow("value_too_large");
+    await t.service.handlers.reject({ requestId });
+    await run;
   });
 });
 

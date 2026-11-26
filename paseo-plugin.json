@@ -2,6 +2,7 @@
   "id": "blind-secrets",
   "name": "blind-secrets",
   "description": "Give an agent secrets, and read its secrets, without the model seeing them",
+  "icon": "assets/icon.png",
   "media": [],
   "requirements": {
     "paseo": ">=0.16.2"

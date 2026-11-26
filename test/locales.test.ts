@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { notReadablePath } from "../client/errors";
+import { parseSecretError } from "../client/errors";
 
 const dir = join(__dirname, "..", "client", "locales");
 const LANGUAGES = ["ar", "en", "es", "fr", "ja", "ko", "pt-BR", "ru", "zh-CN"];
@@ -35,12 +35,25 @@ describe("locales", () => {
   }
 });
 
-describe("notReadablePath", () => {
-  it("extracts the path from the daemon's not-readable error", () => {
-    expect(notReadablePath("not readable: /work/g")).toBe("/work/g");
+describe("parseSecretError", () => {
+  it("maps the daemon's file errors to a translation key and the path", () => {
+    expect(parseSecretError("not readable: /work/g")).toEqual({ key: "notReadable", path: "/work/g" });
+    expect(parseSecretError("not text: /work/b")).toEqual({ key: "notText", path: "/work/b" });
+    expect(parseSecretError("too large: /work/c")).toEqual({ key: "tooLarge", path: "/work/c" });
+  });
+
+  it("maps the value size error without a path", () => {
+    expect(parseSecretError("value_too_large")).toEqual({ key: "valueTooLarge" });
   });
 
   it("returns null for any other error text", () => {
-    expect(notReadablePath("unknown_request")).toBeNull();
+    expect(parseSecretError("unknown_request")).toBeNull();
+  });
+
+  it("only uses keys that exist in the English file", () => {
+    const keys = Object.keys(load("en"));
+    for (const message of ["not readable: p", "not text: p", "too large: p", "value_too_large"]) {
+      expect(keys).toContain(parseSecretError(message)!.key);
+    }
   });
 });
