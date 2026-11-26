@@ -54,3 +54,7 @@ paseo plugin reload blind-secrets
 The daemon part is in `server/` (tools, request registry, file handling), the card is in `client/`, and the contracts shared by both are in `shared/`. The OpenCode provider rejects a tool whose description or schema changes while an agent that holds it is open, so close such agents before reloading a changed definition.
 
 The eye and keyhole icon in `client/icons.ts` is traced from the plugin icon. The eye outline idea follows Lucide's `eye-off` icon (ISC license).
+
+## License
+
+[MIT](LICENSE)

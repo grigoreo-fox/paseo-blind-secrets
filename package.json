@@ -1,7 +1,7 @@
 {
   "name": "blind-secrets",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "files": [
     "paseo-plugin.json",
     "OVERVIEW.md",
@@ -13,7 +13,8 @@
     "client/",
     "server/",
     "shared/",
-    "assets/"
+    "assets/",
+    "LICENSE"
   ],
   "scripts": {
     "typecheck": "tsc --noEmit",
@@ -40,5 +41,6 @@
     "paseo-plugin",
     "ai-agents",
     "secrets"
-  ]
+  ],
+  "license": "MIT"
 }
