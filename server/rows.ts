@@ -1,5 +1,7 @@
-import type { PaseoApi } from "@getpaseo/client";
+import type { AgentToolContext } from "@getpaseo/plugin/server";
 import { secretRowData, type SecretRowData } from "../shared/contracts";
+
+type PaseoApi = AgentToolContext["paseo"];
 
 export type AppendRow = (paseo: PaseoApi, agentId: string, data: SecretRowData) => Promise<void>;
 
