@@ -1,7 +1,7 @@
 import { defineRpc } from "@getpaseo/plugin";
 import { z } from "zod";
 
-export const getSecretsInput = z.object({
+export const requestSecretsInput = z.object({
   secrets: z
     .array(
       z.object({
@@ -13,7 +13,7 @@ export const getSecretsInput = z.object({
     .min(1),
 });
 
-export const showSecretsInput = z.object({
+export const sendSecretsInput = z.object({
   secrets: z
     .array(
       z.object({

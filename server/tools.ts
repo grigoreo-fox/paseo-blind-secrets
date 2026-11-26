@@ -4,7 +4,7 @@ import {
   type AgentToolContext,
   type AgentToolResult,
 } from "@getpaseo/plugin/server";
-import { getSecretsInput, showSecretsInput, type SecretRowData } from "../shared/contracts";
+import { requestSecretsInput, sendSecretsInput, type SecretRowData } from "../shared/contracts";
 import { MAX_SECRET_BYTES, type Staged } from "./files";
 import type { Outcome, Registry } from "./requests";
 import type { AppendRow } from "./rows";
@@ -90,12 +90,12 @@ export function createSecretService(deps: SecretDeps) {
     return found.join(", ");
   }
 
-  const getSecrets = defineAgentTool({
-    name: "get_secrets",
-    title: "Get secrets from the user",
+  const requestSecrets = defineAgentTool({
+    name: "request_secrets",
+    title: "Request secrets from the user",
     description:
-      "Ask the user for secrets (API keys, passwords, tokens). The user types the values into a private form and they are written to the files you name. You never see the values. Each secret has a name, a file path and an optional description. Existing files are overwritten. Waits until the user answers.",
-    input: getSecretsInput,
+      "Request secrets (API keys, passwords, tokens) from the user. The user types the values into a private form and they are written to the files you name. You will NOT receive the values: the result only says whether the files were written. Each secret has a name, a file path and an optional description. Existing files are overwritten. Waits until the user answers.",
+    input: requestSecretsInput,
     async execute({ secrets }, context) {
       if (duplicate(secrets.map((s) => s.name))) {
         return { isError: true, text: "Secret names must be unique." };
@@ -119,12 +119,12 @@ export function createSecretService(deps: SecretDeps) {
     },
   });
 
-  const showSecrets = defineAgentTool({
-    name: "show_secrets",
-    title: "Show secrets to the user",
+  const sendSecrets = defineAgentTool({
+    name: "send_secrets",
+    title: "Send secrets to the user",
     description:
-      "Show the user the content of secret files (for example a generated password or API key) in a private card with a copy button. You never see the values. Each secret has a label and a file path. Waits until the user closes the card.",
-    input: showSecretsInput,
+      "Send secrets from files to the user, for example a password or API key you generated and saved. The user sees each value in a private card with a copy button. You will NOT see the values: the result only says which files were shown to the user. Each secret has a label and a file path. Waits until the user closes the card.",
+    input: sendSecretsInput,
     async execute({ secrets }, context) {
       if (duplicate(secrets.map((s) => s.label))) {
         return { isError: true, text: "Secret labels must be unique." };
@@ -234,5 +234,5 @@ export function createSecretService(deps: SecretDeps) {
     },
   };
 
-  return { getSecrets, showSecrets, handlers };
+  return { requestSecrets, sendSecrets, handlers };
 }

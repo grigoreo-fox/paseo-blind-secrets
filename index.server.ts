@@ -9,7 +9,7 @@ import { secretsPending, secretsRead, secretsReject, secretsSubmit } from "./sha
 
 export default function contribute(server: PluginServerContext) {
   const registry = createRegistry();
-  const { getSecrets, showSecrets, handlers } = createSecretService({
+  const { requestSecrets, sendSecrets, handlers } = createSecretService({
     registry,
     files: { stage: stageSecret, read: readSecret, checkWritable },
     resolve: (cwd, input) => resolveSecretPath(cwd, input),
@@ -17,7 +17,7 @@ export default function contribute(server: PluginServerContext) {
   });
 
   server.addHook("agent.open.before", async ({ request }) =>
-    attachTools(request, [getSecrets, showSecrets]),
+    attachTools(request, [requestSecrets, sendSecrets]),
   );
   server.handle(secretsSubmit, handlers.submit);
   server.handle(secretsReject, handlers.reject);

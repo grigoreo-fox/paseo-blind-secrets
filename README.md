@@ -14,8 +14,8 @@ Two tools for every interactive agent:
 
 | Tool | What the agent does | What you see | What the agent learns |
 | --- | --- | --- | --- |
-| `get_secrets` | Names the secrets it needs and a file for each | A card with a masked field per secret and the full path it will write to | Only that the files were written (or that you declined) |
-| `show_secrets` | Names files that hold secrets, for example a password it generated | A card with each value hidden, an eye icon to reveal it, and Copy | Only that the secrets were shown |
+| `request_secrets` | Names the secrets it needs and a file for each | A card with a masked field per secret and the full path it will write to | Only that the files were written (or that you declined) |
+| `send_secrets` | Names files that hold secrets, for example a password it generated | A card with each value hidden, an eye icon to reveal it, and Copy | Only that the secrets were shown |
 
 The agent never receives a value in either direction. Values travel from the Paseo app to the daemon, and the daemon writes or reads the file.
 

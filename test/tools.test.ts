@@ -81,10 +81,10 @@ async function tick() {
   await new Promise((resolve) => setTimeout(resolve, 0));
 }
 
-describe("get_secrets", () => {
+describe("request_secrets", () => {
   it("writes the submitted value to the resolved path and keeps it out of results and rows", async () => {
     const t = setup();
-    const run = t.service.getSecrets.execute(ask, t.context());
+    const run = t.service.requestSecrets.execute(ask, t.context());
     await tick();
     expect(t.rows[0]).toMatchObject({ kind: "get", status: "pending" });
     expect(t.rows[0].items[0].resolvedPath).toBe("/work/.secrets/token");
@@ -99,7 +99,7 @@ describe("get_secrets", () => {
 
   it("returns a decline error when the user rejects", async () => {
     const t = setup();
-    const run = t.service.getSecrets.execute(ask, t.context());
+    const run = t.service.requestSecrets.execute(ask, t.context());
     await tick();
     await t.service.handlers.reject({ requestId: t.pendingId() });
     expect(await run).toEqual({ isError: true, text: "The user declined to provide the secrets." });
@@ -108,14 +108,14 @@ describe("get_secrets", () => {
 
   it("returns a timeout error and an expired row", async () => {
     const t = setup({ timeoutMs: 20 });
-    const result = await t.service.getSecrets.execute(ask, t.context());
+    const result = await t.service.requestSecrets.execute(ask, t.context());
     expect(result).toEqual({ isError: true, text: "The user did not answer in time." });
     expect(t.rows.at(-1)?.status).toBe("expired");
   });
 
   it("rejects a second submit for the same request and writes once", async () => {
     const t = setup();
-    const run = t.service.getSecrets.execute(ask, t.context());
+    const run = t.service.requestSecrets.execute(ask, t.context());
     await tick();
     const requestId = t.pendingId();
     await t.service.handlers.submit({ requestId, values: { token: SECRET } });
@@ -129,7 +129,7 @@ describe("get_secrets", () => {
   it("writes once when two submits race while the first write is slow", async () => {
     let open!: () => void;
     const t = setup({ gate: new Promise<void>((resolve) => (open = resolve)) });
-    const run = t.service.getSecrets.execute(ask, t.context());
+    const run = t.service.requestSecrets.execute(ask, t.context());
     await tick();
     const requestId = t.pendingId();
     const first = t.service.handlers.submit({ requestId, values: { token: SECRET } });
@@ -146,7 +146,7 @@ describe("get_secrets", () => {
   it("reports success, not expiry, when the timeout hits during a slow write", async () => {
     let open!: () => void;
     const t = setup({ timeoutMs: 30, gate: new Promise<void>((resolve) => (open = resolve)) });
-    const run = t.service.getSecrets.execute(ask, t.context());
+    const run = t.service.requestSecrets.execute(ask, t.context());
     await tick();
     const submit = t.service.handlers.submit({ requestId: t.pendingId(), values: { token: SECRET } });
     await new Promise((resolve) => setTimeout(resolve, 80));
@@ -161,7 +161,7 @@ describe("get_secrets", () => {
   it("refuses a reject while the files are being written", async () => {
     let open!: () => void;
     const t = setup({ gate: new Promise<void>((resolve) => (open = resolve)) });
-    const run = t.service.getSecrets.execute(ask, t.context());
+    const run = t.service.requestSecrets.execute(ask, t.context());
     await tick();
     const requestId = t.pendingId();
     const submit = t.service.handlers.submit({ requestId, values: { token: SECRET } });
@@ -174,7 +174,7 @@ describe("get_secrets", () => {
 
   it("writes nothing when staging the second file fails, and the request stays pending", async () => {
     const t = setup({ failStage: "/work/b" });
-    const run = t.service.getSecrets.execute(two, t.context());
+    const run = t.service.requestSecrets.execute(two, t.context());
     await tick();
     const requestId = t.pendingId();
     await expect(
@@ -190,7 +190,7 @@ describe("get_secrets", () => {
 
   it("rejects a submit with a label that is not in the request and keeps it pending", async () => {
     const t = setup();
-    const run = t.service.getSecrets.execute(ask, t.context());
+    const run = t.service.requestSecrets.execute(ask, t.context());
     await tick();
     const requestId = t.pendingId();
     await expect(t.service.handlers.submit({ requestId, values: { other: SECRET } })).rejects.toThrow(
@@ -203,7 +203,7 @@ describe("get_secrets", () => {
 
   it("rejects a submit that misses a requested label", async () => {
     const t = setup();
-    const run = t.service.getSecrets.execute(ask, t.context());
+    const run = t.service.requestSecrets.execute(ask, t.context());
     await tick();
     const requestId = t.pendingId();
     await expect(t.service.handlers.submit({ requestId, values: {} })).rejects.toThrow("missing_value");
@@ -213,7 +213,7 @@ describe("get_secrets", () => {
 
   it("keeps spaces and the trailing newline of the value", async () => {
     const t = setup();
-    const run = t.service.getSecrets.execute(ask, t.context());
+    const run = t.service.requestSecrets.execute(ask, t.context());
     await tick();
     await t.service.handlers.submit({ requestId: t.pendingId(), values: { token: " v\n" } });
     await run;
@@ -222,8 +222,8 @@ describe("get_secrets", () => {
 
   it("gives two concurrent requests separate ids, rows and pending entries", async () => {
     const t = setup();
-    const a = t.service.getSecrets.execute(ask, t.context());
-    const b = t.service.getSecrets.execute(ask, t.context());
+    const a = t.service.requestSecrets.execute(ask, t.context());
+    const b = t.service.requestSecrets.execute(ask, t.context());
     await tick();
     const pending = await t.service.handlers.pending({ agentId: "agent-1" });
     expect(new Set(pending.requests.map((r) => r.requestId)).size).toBe(2);
@@ -234,7 +234,7 @@ describe("get_secrets", () => {
 
   it("rejects duplicate names without opening a request", async () => {
     const t = setup();
-    const result = await t.service.getSecrets.execute(
+    const result = await t.service.requestSecrets.execute(
       { secrets: [ask.secrets[0], ask.secrets[0]] },
       t.context(),
     );
@@ -245,7 +245,7 @@ describe("get_secrets", () => {
   it("expires the row when the call is aborted", async () => {
     const t = setup();
     const controller = new AbortController();
-    const run = t.service.getSecrets.execute(ask, t.context(controller.signal));
+    const run = t.service.requestSecrets.execute(ask, t.context(controller.signal));
     await tick();
     controller.abort();
     await run;
@@ -255,7 +255,7 @@ describe("get_secrets", () => {
 
   it("does not leave a request behind when the first row cannot be appended", async () => {
     const t = setup({ failAppend: true });
-    await expect(t.service.getSecrets.execute(ask, t.context())).rejects.toThrow("append failed");
+    await expect(t.service.requestSecrets.execute(ask, t.context())).rejects.toThrow("append failed");
     expect(t.registry.listForAgent("agent-1")).toEqual([]);
   });
 });
@@ -263,7 +263,7 @@ describe("get_secrets", () => {
 describe("value size limit", () => {
   it("refuses an oversized value for any item and writes nothing", async () => {
     const t = setup();
-    const run = t.service.getSecrets.execute(two, t.context());
+    const run = t.service.requestSecrets.execute(two, t.context());
     await tick();
     const requestId = t.pendingId();
     await expect(
@@ -279,7 +279,7 @@ describe("value size limit", () => {
 
   it("measures the limit in bytes, not characters", async () => {
     const t = setup();
-    const run = t.service.getSecrets.execute(ask, t.context());
+    const run = t.service.requestSecrets.execute(ask, t.context());
     await tick();
     const requestId = t.pendingId();
     const value = "я".repeat(MAX_SECRET_BYTES / 2 + 1);
@@ -291,7 +291,7 @@ describe("value size limit", () => {
   });
 });
 
-describe("show_secrets", () => {
+describe("send_secrets", () => {
   const show = {
     secrets: [
       { label: "token", path: "t" },
@@ -301,7 +301,7 @@ describe("show_secrets", () => {
 
   it("returns values only to the reader and leaks nothing", async () => {
     const t = setup({ readable: { "/work/t": SECRET } });
-    const run = t.service.showSecrets.execute({ secrets: [show.secrets[0]] }, t.context());
+    const run = t.service.sendSecrets.execute({ secrets: [show.secrets[0]] }, t.context());
     await tick();
     const requestId = t.pendingId();
     const read = await t.service.handlers.read({ requestId });
@@ -314,7 +314,7 @@ describe("show_secrets", () => {
 
   it("names the files that vanished after the check and marks them in the row", async () => {
     const t = setup({ readable: { "/work/t": SECRET, "/work/g": SECRET }, failAfterFirstRead: ["/work/g"] });
-    const run = t.service.showSecrets.execute(show, t.context());
+    const run = t.service.sendSecrets.execute(show, t.context());
     await tick();
     const requestId = t.pendingId();
     const read = await t.service.handlers.read({ requestId });
@@ -337,7 +337,7 @@ describe("show_secrets", () => {
       readable: { "/work/t": SECRET, "/work/g": SECRET },
       failAfterFirstRead: ["/work/t", "/work/g"],
     });
-    const run = t.service.showSecrets.execute(show, t.context());
+    const run = t.service.sendSecrets.execute(show, t.context());
     await tick();
     const requestId = t.pendingId();
     await t.service.handlers.read({ requestId });
@@ -350,7 +350,7 @@ describe("show_secrets", () => {
 
   it("returns the decline text when a show request is rejected", async () => {
     const t = setup({ readable: { "/work/t": SECRET } });
-    const run = t.service.showSecrets.execute({ secrets: [show.secrets[0]] }, t.context());
+    const run = t.service.sendSecrets.execute({ secrets: [show.secrets[0]] }, t.context());
     await tick();
     await t.service.handlers.reject({ requestId: t.pendingId() });
     expect(await run).toEqual({ isError: true, text: "The user declined to provide the secrets." });
@@ -358,7 +358,7 @@ describe("show_secrets", () => {
 
   it("refuses to read a get request", async () => {
     const t = setup({ readable: { "/work/.secrets/token": SECRET } });
-    const run = t.service.getSecrets.execute(ask, t.context());
+    const run = t.service.requestSecrets.execute(ask, t.context());
     await tick();
     const requestId = t.pendingId();
     await expect(t.service.handlers.read({ requestId })).rejects.toThrow("unknown_request");
@@ -368,7 +368,7 @@ describe("show_secrets", () => {
 
   it("refuses to read after the request has ended", async () => {
     const t = setup({ readable: { "/work/t": SECRET } });
-    const run = t.service.showSecrets.execute({ secrets: [show.secrets[0]] }, t.context());
+    const run = t.service.sendSecrets.execute({ secrets: [show.secrets[0]] }, t.context());
     await tick();
     const requestId = t.pendingId();
     await t.service.handlers.submit({ requestId, values: {} });
@@ -386,9 +386,9 @@ describe("checks before the user is asked", () => {
     ],
   };
 
-  it("show_secrets returns every unreadable file to the agent and shows no card", async () => {
+  it("send_secrets returns every unreadable file to the agent and shows no card", async () => {
     const t = setup({ readable: { "/work/t": SECRET, "/work/b": "<binary>" } });
-    const result = await t.service.showSecrets.execute(show, t.context());
+    const result = await t.service.sendSecrets.execute(show, t.context());
     expect(result).toEqual({
       isError: true,
       text: "Cannot show: /work/g (not readable), /work/b (not text). The user was not asked.",
@@ -398,18 +398,18 @@ describe("checks before the user is asked", () => {
     t.nothingLeaks(result);
   });
 
-  it("show_secrets opens the card when every file passes", async () => {
+  it("send_secrets opens the card when every file passes", async () => {
     const t = setup({ readable: { "/work/t": SECRET } });
-    const run = t.service.showSecrets.execute({ secrets: [show.secrets[0]] }, t.context());
+    const run = t.service.sendSecrets.execute({ secrets: [show.secrets[0]] }, t.context());
     await tick();
     expect(t.rows[0].status).toBe("pending");
     await t.service.handlers.submit({ requestId: t.pendingId(), values: {} });
     expect((await run).isError).toBeFalsy();
   });
 
-  it("get_secrets returns unwritable targets to the agent and shows no card", async () => {
+  it("request_secrets returns unwritable targets to the agent and shows no card", async () => {
     const t = setup({ failCheck: { "/work/b": "is a directory" } });
-    const result = await t.service.getSecrets.execute(two, t.context());
+    const result = await t.service.requestSecrets.execute(two, t.context());
     expect(result).toEqual({
       isError: true,
       text: "Cannot write: /work/b (is a directory). The user was not asked.",
@@ -418,9 +418,9 @@ describe("checks before the user is asked", () => {
     expect(t.registry.listForAgent("agent-1")).toEqual([]);
   });
 
-  it("get_secrets refuses two secrets that resolve to the same file", async () => {
+  it("request_secrets refuses two secrets that resolve to the same file", async () => {
     const t = setup();
-    const result = await t.service.getSecrets.execute(
+    const result = await t.service.requestSecrets.execute(
       {
         secrets: [
           { name: "a", path: "x" },
@@ -434,9 +434,9 @@ describe("checks before the user is asked", () => {
     expect(t.rows).toEqual([]);
   });
 
-  it("get_secrets lists every unwritable target", async () => {
+  it("request_secrets lists every unwritable target", async () => {
     const t = setup({ failCheck: { "/work/a": "not writable", "/work/b": "is a directory" } });
-    const result = await t.service.getSecrets.execute(two, t.context());
+    const result = await t.service.requestSecrets.execute(two, t.context());
     expect(result.text).toBe(
       "Cannot write: /work/a (not writable), /work/b (is a directory). The user was not asked.",
     );
