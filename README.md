@@ -32,6 +32,12 @@ The agent never receives a value in either direction. Values travel from the Pas
 Requires Paseo 0.16.2 or later with plugins enabled on the daemon.
 
 ```bash
+paseo plugin add grigoreo-fox/blind-secrets
+```
+
+This installs the reviewed release from the [plugin registry](https://paseo.sh/plugins/grigoreo-fox/blind-secrets). To follow the latest `main` instead, install straight from Git:
+
+```bash
 paseo plugin add git:grigoreo-fox/paseo-blind-secrets
 ```
 
