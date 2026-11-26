@@ -1,8 +1,10 @@
-import { useRpc, type PluginHostProps } from "@getpaseo/plugin/client";
-import { copyText } from "@getpaseo/plugin/client/ui";
+import { useRpc, useTranslation, type PluginHostProps } from "@getpaseo/plugin/client";
+import { copyText, Icon } from "@getpaseo/plugin/client/ui";
 import { useEffect, useMemo, useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
+import { notReadablePath } from "./errors";
 import { maskValue } from "./mask";
+import { messages } from "./messages";
 import {
   secretsRead,
   secretsReject,
@@ -35,6 +37,25 @@ function useStyles(theme: Theme, layout: Layout) {
         borderRadius: 8,
         padding: 10,
       },
+      valueBox: {
+        borderWidth: 1,
+        borderColor: theme.colors.border,
+        borderRadius: 8,
+        paddingVertical: 10,
+        paddingStart: 10,
+        paddingEnd: 44,
+        minHeight: 42,
+        justifyContent: "center" as const,
+      },
+      eye: {
+        position: "absolute" as const,
+        end: 0,
+        top: 0,
+        bottom: 0,
+        width: 44,
+        alignItems: "center" as const,
+        justifyContent: "center" as const,
+      },
       row: { flexDirection: "row" as const, gap: 8 },
       primary: {
         flex: 1,
@@ -59,12 +80,13 @@ function useStyles(theme: Theme, layout: Layout) {
 
 function Summary({ data, theme, layout, expired }: Props) {
   const styles = useStyles(theme, layout);
+  const { t } = useTranslation(messages);
   const paths = data.items.map((i) => i.resolvedPath).join(", ");
   const status = expired ? "expired" : data.status;
   const text = {
-    done: data.kind === "get" ? `Secrets written: ${paths}` : "Secrets shown and closed",
-    rejected: "You declined this request",
-    expired: "This request expired",
+    done: data.kind === "get" ? t("summaryWritten", { paths }) : t("summaryShown"),
+    rejected: t("summaryRejected"),
+    expired: t("summaryExpired"),
     pending: "",
   }[status];
   return <Text style={styles.muted}>{text}</Text>;
@@ -72,6 +94,7 @@ function Summary({ data, theme, layout, expired }: Props) {
 
 function GetForm({ data, theme, layout }: Props) {
   const styles = useStyles(theme, layout);
+  const { t } = useTranslation(messages);
   const submit = useRpc(secretsSubmit);
   const reject = useRpc(secretsReject);
   const [values, setValues] = useState<Record<string, string>>({});
@@ -88,7 +111,7 @@ function GetForm({ data, theme, layout }: Props) {
       await action();
       setValues({});
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Request failed");
+      setError(e instanceof Error ? e.message : t("requestFailed"));
     } finally {
       setBusy(false);
     }
@@ -96,12 +119,8 @@ function GetForm({ data, theme, layout }: Props) {
 
   return (
     <View style={styles.box}>
-      <Text style={styles.title}>
-        The agent asks for {data.items.length === 1 ? "a secret" : "secrets"}
-      </Text>
-      <Text style={styles.muted}>
-        The values go straight to the files. The agent does not see them.
-      </Text>
+      <Text style={styles.title}>{t("getTitle")}</Text>
+      <Text style={styles.muted}>{t("getHint")}</Text>
       {data.items.map((item) => (
         <View key={item.label} style={{ gap: 4 }}>
           <Text style={styles.label}>{item.label}</Text>
@@ -112,32 +131,32 @@ function GetForm({ data, theme, layout }: Props) {
             secureTextEntry
             autoCapitalize="none"
             autoCorrect={false}
-            placeholder="Secret value"
+            placeholder={t("valuePlaceholder")}
             placeholderTextColor={theme.colors.foregroundMuted}
             style={styles.input}
           />
-          <Text style={styles.muted}>Writes to {item.resolvedPath} (overwrites if it exists)</Text>
+          <Text style={styles.muted}>{t("writesTo", { path: item.resolvedPath })}</Text>
         </View>
       ))}
       {error ? <Text style={styles.error}>{error}</Text> : null}
       <View style={styles.row}>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Write secrets"
+          accessibilityLabel={t("write")}
           disabled={!ready || busy}
           style={[styles.primary, !ready || busy ? styles.primaryOff : null]}
           onPress={() => run(() => submit({ requestId: data.requestId, values }))}
         >
-          <Text style={styles.primaryText}>Write</Text>
+          <Text style={styles.primaryText}>{t("write")}</Text>
         </Pressable>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Reject request"
+          accessibilityLabel={t("reject")}
           disabled={busy}
           style={styles.secondary}
           onPress={() => run(() => reject({ requestId: data.requestId }))}
         >
-          <Text style={styles.secondaryText}>Reject</Text>
+          <Text style={styles.secondaryText}>{t("reject")}</Text>
         </Pressable>
       </View>
     </View>
@@ -148,6 +167,7 @@ type Shown = { label: string; value?: string; error?: string };
 
 function ShowForm({ data, theme, layout }: Props) {
   const styles = useStyles(theme, layout);
+  const { t } = useTranslation(messages);
   const read = useRpc(secretsRead);
   const submit = useRpc(secretsSubmit);
   const [items, setItems] = useState<Shown[] | null>(null);
@@ -159,7 +179,7 @@ function ShowForm({ data, theme, layout }: Props) {
     read({ requestId: data.requestId }).then(
       (result) => live && setItems(result.items),
       (e: unknown) =>
-        live && setNote(e instanceof Error ? e.message : "Could not read the secrets"),
+        live && setNote(e instanceof Error ? e.message : t("readFailed")),
     );
     return () => {
       live = false;
@@ -169,10 +189,8 @@ function ShowForm({ data, theme, layout }: Props) {
 
   return (
     <View style={styles.box}>
-      <Text style={styles.title}>
-        The agent shows {data.items.length === 1 ? "a secret" : "secrets"}
-      </Text>
-      <Text style={styles.muted}>Only you see the values. The agent does not.</Text>
+      <Text style={styles.title}>{t("showTitle")}</Text>
+      <Text style={styles.muted}>{t("showHint")}</Text>
       {(items ?? []).map((item) => {
         const shown = revealed[item.label] === true;
         const text = item.value ?? "";
@@ -180,37 +198,44 @@ function ShowForm({ data, theme, layout }: Props) {
           <View key={item.label} style={{ gap: 4 }}>
             <Text style={styles.label}>{item.label}</Text>
             {item.error ? (
-              <Text style={styles.error}>{item.error}</Text>
+              <Text style={styles.error}>
+                {notReadablePath(item.error) !== null
+                  ? t("notReadable", { path: notReadablePath(item.error) ?? "" })
+                  : item.error}
+              </Text>
             ) : (
               <>
-                <View style={styles.input}>
+                <View style={styles.valueBox}>
                   <Text selectable={shown} style={styles.label}>
                     {maskValue(text, shown) || " "}
                   </Text>
-                </View>
-                <View style={styles.row}>
                   <Pressable
                     accessibilityRole="button"
-                    accessibilityLabel={`${shown ? "Hide" : "Show"} ${item.label}`}
-                    style={styles.secondary}
+                    accessibilityLabel={t(shown ? "hide" : "reveal", { label: item.label })}
+                    hitSlop={6}
+                    style={styles.eye}
                     onPress={() => setRevealed((prev) => ({ ...prev, [item.label]: !shown }))}
                   >
-                    <Text style={styles.secondaryText}>{shown ? "Hide" : "Show"}</Text>
-                  </Pressable>
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel={`Copy ${item.label}`}
-                    style={styles.primary}
-                    onPress={() =>
-                      copyText(text).then(
-                        () => setNote(`Copied ${item.label}`),
-                        () => setNote("Copy failed"),
-                      )
-                    }
-                  >
-                    <Text style={styles.primaryText}>Copy</Text>
+                    <Icon
+                      name={shown ? "EyeOff" : "Eye"}
+                      size={18}
+                      color={theme.colors.foregroundMuted}
+                    />
                   </Pressable>
                 </View>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={t("copy")}
+                  style={styles.primary}
+                  onPress={() =>
+                    copyText(text).then(
+                      () => setNote(t("copied", { label: item.label })),
+                      () => setNote(t("copyFailed")),
+                    )
+                  }
+                >
+                  <Text style={styles.primaryText}>{t("copy")}</Text>
+                </Pressable>
               </>
             )}
           </View>
@@ -219,11 +244,11 @@ function ShowForm({ data, theme, layout }: Props) {
       {note ? <Text style={styles.muted}>{note}</Text> : null}
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel="Close"
+        accessibilityLabel={t("close")}
         style={styles.secondary}
         onPress={() => submit({ requestId: data.requestId, values: {} }).catch(() => undefined)}
       >
-        <Text style={styles.secondaryText}>Close</Text>
+        <Text style={styles.secondaryText}>{t("close")}</Text>
       </Pressable>
     </View>
   );

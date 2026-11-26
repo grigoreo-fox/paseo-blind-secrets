@@ -1,0 +1,23 @@
+{
+  "getTitle": "L'agent demande des secrets",
+  "getHint": "Les valeurs sont écrites directement dans les fichiers. L'agent ne les voit pas.",
+  "showTitle": "L'agent affiche des secrets",
+  "showHint": "Vous seul voyez les valeurs. L'agent ne les voit pas.",
+  "valuePlaceholder": "Valeur du secret",
+  "writesTo": "Écrit dans {{path}} (écrase le fichier s'il existe)",
+  "write": "Écrire",
+  "reject": "Refuser",
+  "close": "Fermer",
+  "copy": "Copier",
+  "copied": "Copié : {{label}}",
+  "copyFailed": "Échec de la copie",
+  "reveal": "Afficher {{label}}",
+  "hide": "Masquer {{label}}",
+  "summaryWritten": "Secrets écrits : {{paths}}",
+  "summaryShown": "Secrets affichés et fermés",
+  "summaryRejected": "Vous avez refusé cette demande",
+  "summaryExpired": "Cette demande a expiré",
+  "requestFailed": "La demande a échoué",
+  "readFailed": "Impossible de lire les secrets",
+  "notReadable": "Impossible de lire {{path}}"
+}

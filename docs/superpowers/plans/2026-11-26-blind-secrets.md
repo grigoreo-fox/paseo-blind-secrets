@@ -4,7 +4,7 @@
 
 **Goal:** A Paseo plugin that lets an agent ask the user for secrets (written to files) and show secrets to the user (read from files), without the values ever entering the model context.
 
-**Architecture:** The daemon subprocess attaches two agent tools (`get_secrets`, `show_secrets`) via `agent.open.before`. Each call registers a pending request, appends a plugin-owned timeline row with names, paths and status only, and waits. A client timeline renderer draws a form card, and a composer pill opens the same form in a popover. Values travel only through plugin RPCs between the client and the daemon, and the daemon writes or reads the files.
+**Architecture:** The daemon subprocess attaches two agent tools (`get_secrets`, `show_secrets`) via `agent.open.before`. Each call registers a pending request, appends a plugin-owned timeline row with names, paths and status only, and waits. A client timeline renderer draws a form card, translated into the languages Paseo supports. Values travel only through plugin RPCs between the client and the daemon, and the daemon writes or reads the files.
 
 **Tech Stack:** TypeScript, Zod, `@getpaseo/plugin` (client and server entries), React Native primitives, Vitest.
 
@@ -31,7 +31,7 @@
 - `show_secrets` on a missing or unreadable file: that field reports an error, other fields still show, and the tool result names the path and says "not readable", never content.
 - Agent closed, tool call aborted or 10 minutes pass: pending request is dropped, the row is updated to `expired`, and a late submit is rejected with an error.
 - Double submit or submit for an unknown request id: second call fails with `unknown_request`, and the file is not written twice.
-- Two concurrent requests from one agent: each has its own id, row and pill entry.
+- Two concurrent requests from one agent: each has its own id and row.
 - Daemon restart: rows survive no longer than the daemon, pending requests are gone, and the card must render `expired` for a row whose request is not pending.
 
 ## File Structure
@@ -41,7 +41,7 @@ paseo-plugin.json
 OVERVIEW.md
 package.json, tsconfig.json, vitest.config.ts
 index.server.ts          wires hook, tools, RPC handlers
-index.client.tsx         registers renderer and pill
+index.client.tsx         registers renderer
 shared/contracts.ts      zod schemas, RPC and row-data contracts
 server/paths.ts          resolveSecretPath
 server/files.ts          writeSecret, readSecret
@@ -49,8 +49,8 @@ server/requests.ts       pending-request registry with timeout
 server/tools.ts          get_secrets and show_secrets definitions
 server/rows.ts           append and update timeline rows
 client/SecretCard.tsx    card rendered in the timeline
-client/SecretForm.tsx    fields, copy, submit, reject (shared by card and pill)
-client/pill.ts           pill registration per agent
+client/SecretForm.tsx    fields, copy, submit, reject
+client/messages.ts       translations (9 languages)
 test/*.test.ts           server unit tests
 ```
 
@@ -69,7 +69,7 @@ test/*.test.ts           server unit tests
 - [ ] **Step 2:** Set `paseo-plugin.json` to `{ "id": "blind-secrets", "name": "blind-secrets", "description": "Give an agent secrets, and read its secrets, without the model seeing them", "requirements": { "paseo": ">=<cli version>" } }`. Delete the scaffold's greeting files and their imports.
 - [ ] **Step 2b:** Build the spike: a server tool `spike_wait` (via `defineAgentTool` attached in `agent.open.before`) that appends a `kind: "spike"` row with `timeline.append`, then waits for an RPC `spike.done` or 60 s. A client renderer for `spike` draws a `TextInput` (secureTextEntry) and a Pressable that copies the text with the host clipboard API and calls `spike.done`.
 - [ ] **Step 3:** `npm run typecheck`, `paseo plugin install /home/dev/projects/paseo-paste-secret`, `paseo plugin ls` shows `running`. In a Codex or Claude agent in a test workspace, ask it to call `spike_wait`. Check and write to `docs/superpowers/specs/spike-notes.md`: (a) the row appears for the calling agent and stays at the bottom while the tool waits; (b) text entry works on web, and on a phone client if one is available (keyboard does not cover the field, no input lag); (c) copy to clipboard works on each tried platform.
-- [ ] **Step 4:** If (a) fails, stop and report to the user: the card design needs revisiting. If (b) fails on a phone, note it and plan for the pill popover as the only phone entry point. If (c) fails, report.
+- [ ] **Step 4:** If (a) fails, stop and report to the user: the card design needs revisiting. If (b) fails on a phone, note it and report. If (c) fails, report. (Result: all three worked, see spike-notes.md.)
 - [ ] **Step 5:** Delete `client/spike.tsx`, `server/spike.ts` and their registrations. Commit: `git add -A && git commit -m "chore: scaffold blind-secrets and record spike results"`.
 
 ---
@@ -183,19 +183,17 @@ test/*.test.ts           server unit tests
 
 ---
 
-### Task 7: Composer pill
+### Task 7: Translations (replaces the dropped composer pill)
 
 **Files:**
-- Create: `client/pill.ts`
-- Modify: `index.client.tsx`
+- Create: `client/messages.ts`, `client/errors.ts`, `client/locales/{en,ar,es,fr,ja,ko,pt-BR,ru,zh-CN}.json`
+- Modify: `client/SecretForm.tsx`, `tsconfig.json` (`resolveJsonModule`)
+- Test: `test/locales.test.ts`
 
-**Interfaces:**
-- Consumes: `secretsPending`, `SecretForm`.
-- Produces: `registerPill(client: PluginClientContext): () => void` — for each agent in `client.paseo.agents.list({ subscribe })` (same ownership pattern as the paseo-plugin skill's pill example), poll `secretsPending({ agentId })` every 2 seconds while the agent is running (stop when idle), and show a pill `Secrets (N)` with `behavior: { kind: "popover", Content }` only when N > 0. `Content` renders `SecretForm` for each pending request. `remove()` the pill when N is 0 and on cleanup.
-
-- [ ] **Step 1:** Implement per the interface; `npm run typecheck`.
-- [ ] **Step 2:** Reload and verify: while an agent waits on `get_secrets`, the pill appears with the right count, the popover submits and the card also updates; after a reject or expiry the pill disappears. With two concurrent requests from one agent the count is 2. Check a compact (phone-width) window.
-- [ ] **Step 3:** Commit `feat: composer pill for pending secrets`.
+- [x] **Step 1:** The user dropped the composer pill (the card works on desktop and iPhone). Languages are the ones Paseo supports (`docs/i18n.md`): en, ar, es, fr, ja, ko, pt-BR, ru, zh-CN.
+- [x] **Step 2:** Test first: the locale folder has exactly those files, every non-English file has the same keys as `en` and the same `{{placeholders}}`, no empty text; `notReadablePath` extracts the path from the daemon's `not readable: <path>` error.
+- [x] **Step 3:** Implement `defineTranslations` in `client/messages.ts`, use `useTranslation(messages)` in the form, no plural keys (avoids per-language plural forms). Reveal control is an eye icon (`Icon` `Eye`/`EyeOff`) inside the right end of the value field.
+- [ ] **Step 4:** Verify on a phone with the app language switched to another language.
 
 ---
 

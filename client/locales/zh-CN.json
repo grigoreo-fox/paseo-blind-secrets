@@ -1,0 +1,23 @@
+{
+  "getTitle": "智能体请求提供密钥",
+  "getHint": "这些值会直接写入文件，智能体看不到。",
+  "showTitle": "智能体向你展示密钥",
+  "showHint": "只有你能看到这些值，智能体看不到。",
+  "valuePlaceholder": "密钥值",
+  "writesTo": "将写入 {{path}}（如果文件已存在则覆盖）",
+  "write": "写入",
+  "reject": "拒绝",
+  "close": "关闭",
+  "copy": "复制",
+  "copied": "已复制 {{label}}",
+  "copyFailed": "复制失败",
+  "reveal": "显示 {{label}}",
+  "hide": "隐藏 {{label}}",
+  "summaryWritten": "密钥已写入：{{paths}}",
+  "summaryShown": "密钥已展示并关闭",
+  "summaryRejected": "你已拒绝此请求",
+  "summaryExpired": "此请求已过期",
+  "requestFailed": "请求失败",
+  "readFailed": "无法读取密钥",
+  "notReadable": "无法读取 {{path}}"
+}

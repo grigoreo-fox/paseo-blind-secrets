@@ -1,0 +1,23 @@
+{
+  "getTitle": "에이전트가 시크릿을 요청합니다",
+  "getHint": "값은 파일에 바로 기록됩니다. 에이전트는 값을 볼 수 없습니다.",
+  "showTitle": "에이전트가 시크릿을 보여 줍니다",
+  "showHint": "값은 나만 볼 수 있습니다. 에이전트는 볼 수 없습니다.",
+  "valuePlaceholder": "시크릿 값",
+  "writesTo": "{{path}}에 기록합니다(파일이 있으면 덮어씁니다)",
+  "write": "기록",
+  "reject": "거절",
+  "close": "닫기",
+  "copy": "복사",
+  "copied": "{{label}} 복사됨",
+  "copyFailed": "복사하지 못했습니다",
+  "reveal": "{{label}} 보기",
+  "hide": "{{label}} 숨기기",
+  "summaryWritten": "시크릿을 기록했습니다: {{paths}}",
+  "summaryShown": "시크릿을 보여 주고 닫았습니다",
+  "summaryRejected": "이 요청을 거절했습니다",
+  "summaryExpired": "이 요청은 만료되었습니다",
+  "requestFailed": "요청에 실패했습니다",
+  "readFailed": "시크릿을 읽을 수 없습니다",
+  "notReadable": "{{path}}을(를) 읽을 수 없습니다"
+}

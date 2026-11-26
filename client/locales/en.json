@@ -1,0 +1,23 @@
+{
+  "getTitle": "The agent asks for secrets",
+  "getHint": "The values go straight to the files. The agent does not see them.",
+  "showTitle": "The agent shows secrets",
+  "showHint": "Only you see the values. The agent does not.",
+  "valuePlaceholder": "Secret value",
+  "writesTo": "Writes to {{path}} (overwrites if it exists)",
+  "write": "Write",
+  "reject": "Reject",
+  "close": "Close",
+  "copy": "Copy",
+  "copied": "Copied {{label}}",
+  "copyFailed": "Copy failed",
+  "reveal": "Show {{label}}",
+  "hide": "Hide {{label}}",
+  "summaryWritten": "Secrets written: {{paths}}",
+  "summaryShown": "Secrets shown and closed",
+  "summaryRejected": "You declined this request",
+  "summaryExpired": "This request expired",
+  "requestFailed": "Request failed",
+  "readFailed": "Could not read the secrets",
+  "notReadable": "Cannot read {{path}}"
+}

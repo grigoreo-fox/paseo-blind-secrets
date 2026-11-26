@@ -1,0 +1,23 @@
+{
+  "getTitle": "O agente solicita segredos",
+  "getHint": "Os valores vão direto para os arquivos. O agente não os vê.",
+  "showTitle": "O agente mostra segredos",
+  "showHint": "Só você vê os valores. O agente não vê.",
+  "valuePlaceholder": "Valor do segredo",
+  "writesTo": "Grava em {{path}} (sobrescreve se já existir)",
+  "write": "Gravar",
+  "reject": "Recusar",
+  "close": "Fechar",
+  "copy": "Copiar",
+  "copied": "Copiado: {{label}}",
+  "copyFailed": "Falha ao copiar",
+  "reveal": "Mostrar {{label}}",
+  "hide": "Ocultar {{label}}",
+  "summaryWritten": "Segredos gravados: {{paths}}",
+  "summaryShown": "Segredos mostrados e fechados",
+  "summaryRejected": "Você recusou esta solicitação",
+  "summaryExpired": "Esta solicitação expirou",
+  "requestFailed": "A solicitação falhou",
+  "readFailed": "Não foi possível ler os segredos",
+  "notReadable": "Não foi possível ler {{path}}"
+}

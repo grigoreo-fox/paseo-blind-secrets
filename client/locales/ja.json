@@ -1,0 +1,23 @@
+{
+  "getTitle": "エージェントがシークレットを求めています",
+  "getHint": "値はそのままファイルに書き込まれます。エージェントには見えません。",
+  "showTitle": "エージェントがシークレットを表示します",
+  "showHint": "値を見られるのはあなただけです。エージェントには見えません。",
+  "valuePlaceholder": "シークレットの値",
+  "writesTo": "{{path}} に書き込みます（既存のファイルは上書きされます）",
+  "write": "書き込む",
+  "reject": "拒否",
+  "close": "閉じる",
+  "copy": "コピー",
+  "copied": "{{label}} をコピーしました",
+  "copyFailed": "コピーに失敗しました",
+  "reveal": "{{label}} を表示",
+  "hide": "{{label}} を隠す",
+  "summaryWritten": "シークレットを書き込みました: {{paths}}",
+  "summaryShown": "シークレットを表示して閉じました",
+  "summaryRejected": "このリクエストを拒否しました",
+  "summaryExpired": "このリクエストは期限切れです",
+  "requestFailed": "リクエストに失敗しました",
+  "readFailed": "シークレットを読み取れませんでした",
+  "notReadable": "{{path}} を読み取れません"
+}

@@ -1,0 +1,23 @@
+{
+  "getTitle": "El agente solicita secretos",
+  "getHint": "Los valores van directamente a los archivos. El agente no los ve.",
+  "showTitle": "El agente muestra secretos",
+  "showHint": "Solo tú ves los valores. El agente no.",
+  "valuePlaceholder": "Valor del secreto",
+  "writesTo": "Se escribirá en {{path}} (se sobrescribe si ya existe)",
+  "write": "Escribir",
+  "reject": "Rechazar",
+  "close": "Cerrar",
+  "copy": "Copiar",
+  "copied": "Copiado: {{label}}",
+  "copyFailed": "No se pudo copiar",
+  "reveal": "Mostrar {{label}}",
+  "hide": "Ocultar {{label}}",
+  "summaryWritten": "Secretos escritos: {{paths}}",
+  "summaryShown": "Secretos mostrados y cerrados",
+  "summaryRejected": "Rechazaste esta solicitud",
+  "summaryExpired": "Esta solicitud ha caducado",
+  "requestFailed": "La solicitud falló",
+  "readFailed": "No se pudieron leer los secretos",
+  "notReadable": "No se puede leer {{path}}"
+}

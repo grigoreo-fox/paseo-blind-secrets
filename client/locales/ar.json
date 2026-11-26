@@ -1,0 +1,23 @@
+{
+  "getTitle": "يطلب الوكيل أسرارًا",
+  "getHint": "تُكتب القيم مباشرةً في الملفات. لا يراها الوكيل.",
+  "showTitle": "يعرض الوكيل أسرارًا",
+  "showHint": "أنت وحدك ترى القيم. لا يراها الوكيل.",
+  "valuePlaceholder": "قيمة السر",
+  "writesTo": "ستُكتب في {{path}} (يُستبدل الملف إن كان موجودًا)",
+  "write": "اكتب",
+  "reject": "ارفض",
+  "close": "إغلاق",
+  "copy": "نسخ",
+  "copied": "تم نسخ {{label}}",
+  "copyFailed": "فشل النسخ",
+  "reveal": "إظهار {{label}}",
+  "hide": "إخفاء {{label}}",
+  "summaryWritten": "تمت كتابة الأسرار: {{paths}}",
+  "summaryShown": "عُرضت الأسرار وأُغلقت",
+  "summaryRejected": "لقد رفضت هذا الطلب",
+  "summaryExpired": "انتهت صلاحية هذا الطلب",
+  "requestFailed": "فشل الطلب",
+  "readFailed": "تعذّرت قراءة الأسرار",
+  "notReadable": "تعذّرت قراءة {{path}}"
+}

@@ -1,6 +1,6 @@
 # blind-secrets: design
 
-Plugin id: `blind-secrets`. Date: 2026-11-26. Status: draft for approval.
+Plugin id: `blind-secrets`. Date: 2026-11-26. Status: approved; revised 2026-11-26 (pill dropped, eye icon, translations).
 
 ## Intent and why
 
@@ -13,8 +13,10 @@ The plugin lets the user hand a secret to an agent, and receive one from it, thr
 - Two agent tools:
   - `get_secrets`: the agent asks the user for secrets. The user types the values in a form and the plugin writes each one to a file. The agent learns only that it was written.
   - `show_secrets`: the agent names a file (and a label) and the user sees the value, with a copy button. The agent learns only that it was shown.
-- A card in the chat timeline with the form, placed where the agent is waiting. A composer pill above the prompt mirrors it and opens the same form in a popover.
-- Works on desktop and mobile.
+- A card in the chat timeline with the form, placed where the agent is waiting.
+- In `show_secrets` the value is hidden by default and an eye icon at the right end of the field reveals it; Copy sits under the field.
+- Works on desktop and mobile (verified on iPhone).
+- All card text is translated into the languages Paseo itself supports: en, ar, es, fr, ja, ko, pt-BR, ru, zh-CN (source: Paseo `docs/i18n.md`). The plugin follows the app language. Model-facing tool text stays English.
 
 ## Non-goals
 
@@ -39,7 +41,7 @@ The plugin lets the user hand a secret to an agent, and receive one from it, thr
 
 ## Approaches considered
 
-1. **Timeline card plus composer pill (chosen).** The card is a plugin-owned timeline row drawn by a registered renderer, so it sits in the chat, at the bottom while the agent waits. The pill shows "Secrets (N)" while a request is pending and opens the same form in a popover. Trade-off: not pixel-identical to Paseo's native question block, which plugins cannot draw.
+1. **Timeline card (chosen).** The card is a plugin-owned timeline row drawn by a registered renderer, so it sits in the chat, at the bottom while the agent waits. Trade-off: not pixel-identical to Paseo's native question block, which plugins cannot draw. A composer pill that mirrored the card was considered and dropped by the user: the card was verified on desktop and iPhone and the pill adds nothing.
 2. **Workspace panel tab.** More room, but nothing appears near the prompt. Rejected.
 3. **Composer toolbar control only.** Easy to miss that the agent is waiting. Rejected.
 
@@ -52,7 +54,7 @@ Runtimes follow the Paseo plugin layout: `index.server.ts`, `index.client.tsx`, 
   - `secrets.submit`: client sends values for a request; the daemon validates the request id, writes the files, resolves the pending tool call, and updates the row status. Values exist only in this RPC input and the file write.
   - `secrets.reject`: resolves the tool call with a decline.
   - `secrets.read`: for `show_secrets`, the daemon reads the files and returns values to the client only.
-- **Client.** A timeline renderer draws the card for `secret-request`, using `TextInput` for entry and a copy action for display. A composer pill is registered per agent while a request is pending, with a popover showing the same form. Colours come from `theme.colors`, layout from `layout.compact`.
+- **Client.** A timeline renderer draws the card for `secret-request`, using `TextInput` for entry and a copy action for display. Colours come from `theme.colors`, layout from `layout.compact`.
 - **Safety.** Never log values. Mask inputs. Clear values from component state on submit and on unmount. Create parent directories as needed and set file mode `0600`. A completed row keeps names and statuses and no values.
 
 ## Open verification (do first, as a throwaway spike)
@@ -63,4 +65,4 @@ Runtimes follow the Paseo plugin layout: `index.server.ts`, `index.client.tsx`, 
 
 ## Left to the builder
 
-Exact visual styling, copy text and translations, the dedupe rule between card and pill, and the file layout inside the plugin.
+Exact visual styling, copy text and translations, and the file layout inside the plugin.
