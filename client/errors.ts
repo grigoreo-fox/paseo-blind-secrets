@@ -24,10 +24,11 @@ const CODE_ERRORS: Readonly<Record<string, SecretErrorKey>> = {
   request_busy: "requestGone",
 };
 
-const DAEMON_WRAPPER = /^Request failed:\s*/;
+const DAEMON_PREFIX = /^Request failed:\s*/;
+const DAEMON_SUFFIX = /\s+requestType=\S+(?:\s+code=\S+)?\s*$/;
 
 export function parseSecretError(raw: string): ParsedSecretError | null {
-  const message = raw.replace(DAEMON_WRAPPER, "");
+  const message = raw.replace(DAEMON_PREFIX, "").replace(DAEMON_SUFFIX, "");
   for (const [prefix, key] of PATH_ERRORS) {
     if (message.startsWith(prefix)) return { key, path: message.slice(prefix.length) };
   }

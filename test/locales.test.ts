@@ -61,6 +61,18 @@ describe("parseSecretError", () => {
     expect(parseSecretError("Request failed: unknown_request")).toEqual({ key: "requestGone" });
   });
 
+  it("drops the request metadata the client appends to the message", () => {
+    const tail = " requestType=plugin.rpc.invoke.request code=handler_error";
+    expect(parseSecretError(`Request failed: write failed: /work/my dir/a${tail}`)).toEqual({
+      key: "writeFailed",
+      path: "/work/my dir/a",
+    });
+    expect(parseSecretError(`Request failed: value_too_large${tail}`)).toEqual({
+      key: "valueTooLarge",
+    });
+    expect(parseSecretError(`Request failed: unknown_request${tail}`)).toEqual({ key: "requestGone" });
+  });
+
   it("returns null for any other error text", () => {
     expect(parseSecretError("EACCES: permission denied, open '/x'")).toBeNull();
     expect(parseSecretError("unknown_label")).toBeNull();
