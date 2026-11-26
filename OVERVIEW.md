@@ -1,29 +1,25 @@
-<!--
-OVERVIEW.md is required to list your plugin in the registry. Keep it beside
-paseo-plugin.json in your repository at the pinned commit and in your npm package.
-Replace this comment with useful facts before publishing.
+Blind secrets lets you pass secrets to an agent, and read secrets an agent made, without the values ever entering the chat or the model's context.
 
-This overview is for people choosing a plugin in Paseo, on the plugin page under
-its install command. README assumes a GitHub audience and includes technical
-details, installation instructions, and badges. Long, AI-generated READMEs leave
-people reading past that material to understand what the plugin does.
+It adds two tools to every interactive agent:
 
-Write these parts in order, including only what helps someone decide to install:
+- `get_secrets`: the agent names the secrets it needs and the file for each one. A card appears in the chat with a masked field per secret. When you press Write, the daemon saves each value to its file. The agent only learns that the files were written.
+- `show_secrets`: the agent names files that hold secrets, for example a password it generated. A card shows each value hidden. An eye icon in the field reveals it and Copy puts it on your clipboard. The agent only learns that the secrets were shown.
 
-1. Describe what your plugin is and does in plain terms first.
-2. Explain how it works only when it is not obvious.
-3. Explain setup when needed: settings, accounts, tokens, providers, tools, or
-   other plugins. Include applicable daemon version and operating system
-   requirements. Setup guidance is allowed; installation instructions are not.
-4. Explain capabilities and settings worth understanding, what each option does,
-   what the plugin reads or sends and where, permissions, and known limits.
+## How it behaves
 
-Length follows complexity; a theme needs one paragraph. Choose headings only
-when they help. Use sentence case and plain factual language, with no em dashes.
-Omit installation commands, badges, changelog, contributing or license sections,
-marketing, and unsupported claims. Avoid implementation filler such as empty
-cleanup functions, theme-token field lists, or lists of absent features.
+- Each secret is written as the raw value in its own file, with no `KEY=value` format and no trimming. Parent folders are created and the file mode is `0600`.
+- An existing file is always overwritten. The card shows the full resolved path before you write. Relative paths resolve against the agent's working folder, and `~` means your home folder.
+- Reject, or no answer within 10 minutes, gives the agent an error and writes nothing.
+- The card follows the Paseo app language: English, Arabic, Spanish, French, Japanese, Korean, Brazilian Portuguese, Russian and Simplified Chinese. Text sent to the agent stays in English.
 
-To translate the overview, add a whole copy beside this file named for the
-language, such as OVERVIEW.zh-CN.md. Readers in that language see it instead.
--->
+## Setup
+
+Requires Paseo 0.16.2 or later on the daemon, and plugins enabled on that daemon. There are no settings or accounts. Background agents do not get the tools.
+
+## What it reads and sends
+
+Values travel only from the Paseo app to the daemon over the plugin's own connection, and the daemon writes or reads the files. The chat row that holds the card stores names, paths and status, never values. The plugin does not log values.
+
+## Limits
+
+The plugin protects only these two tools. An agent that has a shell can still read a secret file with its own commands, and then the value enters its context. Keep that in mind for secrets the agent should never see. The OpenCode provider rejects a tool whose description or schema changes while an agent that holds it is open, so after updating the plugin, start new agents.
