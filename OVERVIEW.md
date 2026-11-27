@@ -17,11 +17,11 @@ It adds two tools to every interactive agent:
 
 ## Agent rules
 
-On its own an agent often does not know these tools exist. The plugin adds a short set of rules to the system prompt of agents when they are created: ask for secrets with `request_secrets`, give secrets with `send_secrets`, never read or print a secret file, and stop if the tools are missing. Open the plugin's settings to switch the rules off or edit their text. A change applies to agents created after you save it; existing agents keep the prompt they have. The rules are saved in each new agent's configuration and sent to its provider like any system prompt.
+On its own an agent often does not know these tools exist. The plugin adds a short set of rules to the system prompt of agents when they are created: ask for secrets with `request_secrets`, give secrets with `send_secrets`, never read or print a secret file, and stop if the tools are missing. To change them, open this plugin's page under Settings, Plugins. The switch "Add the rules to new agents" turns the rules off and is saved as soon as you flip it. The "Rules text" field holds the wording: Save stores your edit, and Restore default brings back the original text. A change applies to agents created after you save it; existing agents keep the prompt they have. The rules are saved in each new agent's configuration and sent to its provider like any system prompt.
 
 ## Setup
 
-Requires Paseo 0.16.2 or later on the daemon, and plugins enabled on that daemon. There are no settings or accounts, and the plugin makes no network requests and installs nothing. Background agents do not get the tools.
+Requires Paseo 0.16.2 or later on the daemon, and plugins enabled on that daemon. The only setting is the agent rules described above, found under Settings, Plugins, where you can also switch them off. There are no accounts, and the plugin makes no network requests and installs nothing. Background agents do not get the tools.
 
 ## What it reads, writes and sends
 
