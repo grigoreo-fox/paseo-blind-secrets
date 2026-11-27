@@ -22,7 +22,7 @@ The agent never receives a value in either direction. Values travel from the Pas
 ## Behavior
 
 - Multi-line values (private keys, credentials files) are supported. The agent can ask for a `pem` or `json` check, and a value that fails it cannot be written. In the card a multi-line value folds into a summary such as "PEM, 27 lines, 1.7 KiB" with an eye to open it.
-- A short rules text is added to the system prompt of new agents so they use these tools by themselves. Edit or switch it off in the plugin's settings. It applies to agents created after you save.
+- A short rules text is added to the system prompt of new agents so they use these tools by themselves. Edit it or switch it off on the plugin's page under Settings, Plugins. It applies to agents created after you save.
 - One file per secret, holding the raw value: no `KEY=value`, no trimming. Files are `0600`, new folders `0700`, and a write goes through a temporary file and a rename.
 - An existing file is always overwritten. The card shows the resolved path first.
 - The plugin checks the targets before it asks you. If a path is a folder, is not writable, or a file to show is missing, binary or over 64 KiB, the agent gets the error and you see nothing.
@@ -58,6 +58,8 @@ npm run typecheck
 paseo plugin install "$PWD"
 paseo plugin reload blind-secrets
 ```
+
+Before you tag a release, run `npm run verify:install`. It takes the committed `HEAD`, builds it from a clean clone, runs the tests, and installs that exact commit from Git on a throwaway daemon, the same way the registry installs it. It fails unless the plugin reaches `running`. Your own daemon is not touched, and uncommitted changes are not tested.
 
 The daemon part is in `server/` (tools, request registry, file handling), the card is in `client/`, and the contracts shared by both are in `shared/`. The OpenCode provider rejects a tool whose description or schema changes while an agent that holds it is open, so close such agents before reloading a changed definition.
 

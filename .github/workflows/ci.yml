@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Install check (Paseo ${{ matrix.paseo }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        # Pinned: the plugin requires 0.16.2 or later, and a fixed CLI keeps a red run reproducible.
+        paseo: ["0.16.2"]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install Paseo CLI
+        run: |
+          npm install -g "@getpaseo/cli@${{ matrix.paseo }}" --no-audit --no-fund
+          test "$(paseo --version)" = "${{ matrix.paseo }}"
+      - name: Clean build, tests and install on a throwaway daemon
+        run: npm run verify:install
